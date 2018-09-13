@@ -403,6 +403,7 @@ public class RestApiUtils {
 			}
 			returnObject = listResponse;
 		}
+		
 		logger.println("ISPW Operation Complete");
 		
 		return returnObject;
