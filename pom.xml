@@ -24,7 +24,7 @@
 
 	<groupId>com.compuware.jenkins</groupId>
 	<artifactId>compuware-ispw-operations</artifactId>
-	<version>1.0.3-SNAPSHOT</version>
+	<version>1.0.3</version>
 	<packaging>hpi</packaging>
 	<name>Compuware ISPW Operations Plugin</name>
 	<url>https://wiki.jenkins.io/display/JENKINS/Compuware+ISPW+Operations+Plugin</url>
@@ -80,7 +80,7 @@
 		<connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
 		<developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
 		<url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-		<tag>HEAD</tag>
+		<tag>compuware-ispw-operations-1.0.3</tag>
 	</scm>
 
 	<repositories>
