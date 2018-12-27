@@ -18,23 +18,10 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.compuware.ces.model.BasicAuthentication;
 import com.compuware.ces.model.HttpHeader;
-import com.compuware.ispw.model.rest.AssignmentInfo;
-import com.compuware.ispw.model.rest.AssignmentResponse;
 import com.compuware.ispw.model.rest.MessageResponse;
-import com.compuware.ispw.model.rest.ReleaseInfo;
-import com.compuware.ispw.model.rest.ReleaseResponse;
-import com.compuware.ispw.model.rest.SetInfoResponse;
-import com.compuware.ispw.model.rest.TaskInfo;
-import com.compuware.ispw.model.rest.TaskListResponse;
-import com.compuware.ispw.model.rest.TaskListingResponse;
-import com.compuware.ispw.model.rest.TaskResponse;
 import com.compuware.ispw.restapi.Constants;
-import com.compuware.ispw.restapi.HttpMode;
-import com.compuware.ispw.restapi.IspwContextPathBean;
-import com.compuware.ispw.restapi.IspwRequestBean;
 import com.compuware.ispw.restapi.JsonProcessor;
 import com.compuware.ispw.restapi.ResponseContentSupplier;
-import com.compuware.ispw.restapi.action.IspwCommand;
 import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
 import com.compuware.jenkins.common.configuration.HostConnection;
 import hudson.model.Item;
@@ -124,63 +111,6 @@ public class RestApiUtils {
 		return false;
 	}
 	
-	public static void startLog(PrintStream logger, String ispwAction, IspwContextPathBean ispwContextPathBean, Object jsonObject) {
-		logger.println("Starting ISPW Operations Plugin");
-		if (IspwCommand.GenerateTasksInAssignment.equals(ispwAction)) {
-			logger.println("Generating tasks in Assignment "
-					+ ispwContextPathBean.getAssignmentId() + " at level "
-					+ ispwContextPathBean.getLevel());
-		} else if (IspwCommand.GetAssignmentTaskList.equals(ispwAction)) {
-			logger.println("Listing tasks in Assignment " + ispwContextPathBean.getAssignmentId());
-		} else if (IspwCommand.GetAssignmentInfo.equals(ispwAction)) {
-			logger.println("Getting info on Assignment "+ispwContextPathBean.getAssignmentId());
-		} else if (IspwCommand.CreateAssignment.equals(ispwAction)) {
-			AssignmentInfo assignmentInfo = (AssignmentInfo) jsonObject;
-			logger.println("Creating assignment " + assignmentInfo.getStream() + "/"
-					+ assignmentInfo.getApplication() + "/" + assignmentInfo.getDefaultPath()
-					+ " with description - " + assignmentInfo.getDescription());
-		} else if (IspwCommand.PromoteAssignment.equals(ispwAction)) {
-			logger.println("Promoting Assignment " + ispwContextPathBean.getAssignmentId()
-					+ " at level " + ispwContextPathBean.getLevel());
-		} else if (IspwCommand.DeployAssignment.equals(ispwAction)) {
-			logger.println("Deploying Assignment " + ispwContextPathBean.getAssignmentId()
-					+ " at level " + ispwContextPathBean.getLevel());
-		} else if (IspwCommand.RegressAssignment.equals(ispwAction)) {
-			logger.println("Regressing Assignment " + ispwContextPathBean.getAssignmentId()
-					+ " at level " + ispwContextPathBean.getLevel());
-		} else if (IspwCommand.GetReleaseInfo.equals(ispwAction)) {
-			logger.println("Getting info on Release "+ispwContextPathBean.getReleaseId());
-		} else if (IspwCommand.GetReleaseTaskList.equals(ispwAction)) {
-			logger.println("Listing tasks in Release " + ispwContextPathBean.getReleaseId());
-		} else if (IspwCommand.CreateRelease.equals(ispwAction)) {
-			ReleaseInfo releaseInfo = (ReleaseInfo) jsonObject;
-			logger.println("Creating Release on " + releaseInfo.getStream() + "/"
-					+ releaseInfo.getApplication() + " as " + releaseInfo.getReleaseId() + " - "
-					+ releaseInfo.getDescription());
-		} else if (IspwCommand.GenerateTasksInRelease.equals(ispwAction)) {
-			logger.println("Generating tasks in Release " + ispwContextPathBean.getReleaseId()
-					+ " at level " + ispwContextPathBean.getLevel());
-		} else if (IspwCommand.GetReleaseTaskGenerateListing.equals(ispwAction)) {
-			logger.println("Getting Release task generate listing of task "
-					+ ispwContextPathBean.getTaskId() + " in release "
-					+ ispwContextPathBean.getReleaseId());
-		} else if (IspwCommand.GetReleaseTaskInfo.equals(ispwAction)) {
-			logger.println("Getting task " + ispwContextPathBean.getTaskId() + " in Release "
-					+ ispwContextPathBean.getReleaseId());
-		} else if (IspwCommand.DeployRelease.equals(ispwAction)) {
-			logger.println("Deploying tasks in Release " + ispwContextPathBean.getReleaseId()
-					+ " at level " + ispwContextPathBean.getLevel());
-		} else if (IspwCommand.PromoteRelease.equals(ispwAction)) {
-			logger.println("Promoting tasks in Release " + ispwContextPathBean.getReleaseId()
-					+ " at level " + ispwContextPathBean.getLevel());
-		} else if (IspwCommand.RegressRelease.equals(ispwAction)) {
-			logger.println("Regressing tasks in Release " + ispwContextPathBean.getReleaseId()
-					+ " at level " + ispwContextPathBean.getLevel());
-		} else if(IspwCommand.GetSetInfo.equals(ispwAction)) {
-			logger.println("Getting info on Set "+ispwContextPathBean.getSetId());
-		}
-	}
-	
 	//Fix CES bug - CWE-124094 - Get assignment/release/set task list doesn't return a JSON array ("tasks":[]) if they contains just one task
 	public static String fixCesTaskListResponseJson(String responseJson) {
 		String fixedResponseJson = responseJson;
@@ -191,160 +121,6 @@ public class RestApiUtils {
 		}
 		
 		return fixedResponseJson;
-	}
-	
-	public static Object endLog(PrintStream logger, String ispwAction, IspwRequestBean ispwRequestBean, String responseJson, boolean block) {
-		Object returnObject = null;
-		JsonProcessor jsonProcessor = new JsonProcessor();
-		
-		if (IspwCommand.GenerateTasksInAssignment.equals(ispwAction)) {
-			TaskResponse taskResponse = jsonProcessor.parse(responseJson, TaskResponse.class);
-			logger.println("Set "+taskResponse.getSetId()+" created to generate");
-			returnObject = taskResponse;
-		} else if (IspwCommand.GetAssignmentTaskList.equals(ispwAction)) {
-			
-			String fixedResponseJson = fixCesTaskListResponseJson(responseJson);
-			TaskListResponse listResponse = jsonProcessor.parse(fixedResponseJson, TaskListResponse.class);
-			
-			logger.println("TaskId, Module, Type, UserId, Version, Status, Application/Stream/Level, Release");
-			for(TaskInfo taskInfo: listResponse.getTasks()) {
-				logger.println(" " + taskInfo.getTaskId() + ", " + taskInfo.getModuleName() + ", "
-						+ taskInfo.getModuleType() + ", " + taskInfo.getUserId() + ", "
-						+ taskInfo.getVersion() + ", " + taskInfo.getStatus() + ", "
-						+ taskInfo.getApplication() + "/" + taskInfo.getStream() + "/"
-						+ taskInfo.getLevel() + ", " + taskInfo.getRelease());
-			}
-			returnObject = listResponse;
-		} else if (IspwCommand.GetAssignmentInfo.equals(ispwAction)) {
-			AssignmentInfo assignment = jsonProcessor.parse(responseJson, AssignmentInfo.class);
-			logger.println("Stream/Application/Default path: " + assignment.getStream() + "/"
-					+ assignment.getApplication() + "/" + assignment.getDefaultPath());
-			logger.println("Assignment: " + assignment.getProjectNumber() + " - "
-					+ assignment.getDescription());
-			logger.println("Owner: " + assignment.getOwner());
-			logger.println("Rreference number: " + assignment.getRefNumber());
-			logger.println("Release: " + assignment.getRelease());
-			logger.println("User tag: " + assignment.getUserTag());
-			returnObject = assignment;
-		} else if (IspwCommand.CreateAssignment.equals(ispwAction)) {
-			AssignmentResponse assignResp =
-					jsonProcessor.parse(responseJson, AssignmentResponse.class);
-			logger.println("Created Assignment " + assignResp.getAssignmentId());
-			returnObject = assignResp;
-		} else if (IspwCommand.PromoteAssignment.equals(ispwAction)) {
-			TaskResponse taskResp = jsonProcessor.parse(responseJson, TaskResponse.class);
-			logger.println("Set "+taskResp.getSetId()+" created to promote Assignment "+ispwRequestBean.getIspwContextPathBean().getAssignmentId());
-			returnObject = taskResp;
-		} else if (IspwCommand.DeployAssignment.equals(ispwAction)) {
-			TaskResponse taskResp = jsonProcessor.parse(responseJson, TaskResponse.class);
-			logger.println("Set "+taskResp.getSetId()+" created to deploy Assignment "+ispwRequestBean.getIspwContextPathBean().getAssignmentId());	
-			returnObject = taskResp;
-		} else if (IspwCommand.RegressAssignment.equals(ispwAction)) {
-			TaskResponse taskResp = jsonProcessor.parse(responseJson, TaskResponse.class);
-			logger.println("Set "+taskResp.getSetId()+" created to regress Assignment "+ispwRequestBean.getIspwContextPathBean().getAssignmentId());
-			returnObject = taskResp;
-		} else if (IspwCommand.GetReleaseInfo.equals(ispwAction)) {
-			ReleaseInfo releaseInfo = jsonProcessor.parse(responseJson, ReleaseInfo.class);
-			logger.println("Stream/Application: " + releaseInfo.getStream() + "/"
-					+ releaseInfo.getApplication());
-			logger.println("Release: " + releaseInfo.getReleaseId() + " - "
-					+ releaseInfo.getDescription());
-			logger.println("Owner: " + releaseInfo.getOwner());
-			logger.println("Work reference #: " + releaseInfo.getWorkRefNumber());
-			logger.println("Release reference: " + releaseInfo.getReleasePreference());
-			logger.println("User tag: " + releaseInfo.getUserTag());
-			returnObject = releaseInfo;
-		} else if (IspwCommand.GetReleaseTaskList.equals(ispwAction)) {
-			
-			String fixedResponseJson = fixCesTaskListResponseJson(responseJson);
-			TaskListResponse listResponse = jsonProcessor.parse(fixedResponseJson, TaskListResponse.class);
-			
-			logger.println("TaskId, Module, Type, UserId, Version, Status, Application/Stream/Level, Release");
-			for(TaskInfo taskInfo: listResponse.getTasks()) {
-				logger.println(" " + taskInfo.getTaskId() + ", " + taskInfo.getModuleName() + ", "
-						+ taskInfo.getModuleType() + ", " + taskInfo.getUserId() + ", "
-						+ taskInfo.getVersion() + ", " + taskInfo.getStatus() + ", "
-						+ taskInfo.getApplication() + "/" + taskInfo.getStream() + "/"
-						+ taskInfo.getLevel() + ", " + taskInfo.getRelease());
-			}
-			returnObject = listResponse;
-		} else if (IspwCommand.CreateRelease.equals(ispwAction)) {
-			ReleaseResponse releaseResp = jsonProcessor.parse(responseJson, ReleaseResponse.class);
-			logger.println("Created Release " + releaseResp.getReleaseId());
-			returnObject = releaseResp;
-		} else if (IspwCommand.GenerateTasksInRelease.equals(ispwAction)) {
-			TaskResponse taskResp = jsonProcessor.parse(responseJson, TaskResponse.class);
-			logger.println("Set "+taskResp.getSetId()+" created to generate Release "+ispwRequestBean.getIspwContextPathBean().getReleaseId());
-			returnObject = taskResp;;
-		} else if (IspwCommand.GetReleaseTaskGenerateListing.equals(ispwAction)) {
-			TaskListingResponse listingResp = jsonProcessor.parse(responseJson, TaskListingResponse.class);
-			logger.println("Listing: "+listingResp.getListing());
-			returnObject = listingResp;
-		} else if (IspwCommand.GetReleaseTaskInfo.equals(ispwAction)) {
-			TaskInfo taskInfo = jsonProcessor.parse(responseJson,  TaskInfo.class);
-			logger.println("TaskId, Module, Type, UserId, Version, Status, Application/Stream/Level, Release");
-			logger.println(" " + taskInfo.getTaskId() + ", " + taskInfo.getModuleName() + ", "
-					+ taskInfo.getModuleType() + ", " + taskInfo.getUserId() + ", "
-					+ taskInfo.getVersion() + ", " + taskInfo.getStatus() + ", "
-					+ taskInfo.getApplication() + "/" + taskInfo.getStream() + "/"
-					+ taskInfo.getLevel() + ", " + taskInfo.getRelease());
-			returnObject = taskInfo;
-		} else if (IspwCommand.DeployRelease.equals(ispwAction)) {
-			TaskResponse taskResp = jsonProcessor.parse(responseJson, TaskResponse.class);
-			logger.println("Set "+taskResp.getSetId()+" created to deploy Release "+ispwRequestBean.getIspwContextPathBean().getReleaseId());
-			returnObject = taskResp;
-		} else if (IspwCommand.PromoteRelease.equals(ispwAction)) {
-			TaskResponse taskResp = jsonProcessor.parse(responseJson, TaskResponse.class);
-			logger.println("Set "+taskResp.getSetId()+" created to promote Release "+ispwRequestBean.getIspwContextPathBean().getReleaseId());
-			returnObject = taskResp;
-		} else if (IspwCommand.RegressRelease.equals(ispwAction)) {
-			TaskResponse taskResp = jsonProcessor.parse(responseJson, TaskResponse.class);
-			logger.println("Set "+taskResp.getSetId()+" created to regress Release "+ispwRequestBean.getIspwContextPathBean().getReleaseId());
-			returnObject = taskResp;
-		} else if(IspwCommand.GetSetInfo.equals(ispwAction)) {
-			SetInfoResponse setInfoResp = jsonProcessor.parse(responseJson, SetInfoResponse.class);
-			logger.println("SetId, State, Owner, Application/Stream, Start Date/Start Time");
-			logger.println(" " + setInfoResp.getSetid() + ", " + setInfoResp.getState() + ", "
-					+ setInfoResp.getOwner() + ", " + setInfoResp.getApplicationId() + "/"
-					+ setInfoResp.getStreamName() + ", " + setInfoResp.getStartDate() + "/"
-					+ setInfoResp.getStartTime());
-			returnObject = setInfoResp;
-		} else if (IspwCommand.GetSetTaskList.equals(ispwAction)) {
-			
-			String fixedResponseJson = fixCesTaskListResponseJson(responseJson);
-			TaskListResponse listResponse = jsonProcessor.parse(fixedResponseJson, TaskListResponse.class);
-			
-			logger.println("TaskId, Module, Type, UserId, Version, Status, Application/Stream/Level, Release");
-			for(TaskInfo taskInfo: listResponse.getTasks()) {
-				logger.println(" " + taskInfo.getTaskId() + ", " + taskInfo.getModuleName() + ", "
-						+ taskInfo.getModuleType() + ", " + taskInfo.getUserId() + ", "
-						+ taskInfo.getVersion() + ", " + taskInfo.getStatus() + ", "
-						+ taskInfo.getApplication() + "/" + taskInfo.getStream() + "/"
-						+ taskInfo.getLevel() + ", " + taskInfo.getRelease());
-			}
-			returnObject = listResponse;
-		}
-		
-		logger.println("ISPW Operation Complete");
-		
-		return returnObject;
-	}
-
-	public static HttpMode resetHttpMode(String ispwAction) {
-		HttpMode httpMode = HttpMode.POST;
-
-		if (IspwCommand.GetAssignmentInfo.equals(ispwAction)
-				|| IspwCommand.GetAssignmentTaskList.equals(ispwAction)
-				|| IspwCommand.GetReleaseInfo.equals(ispwAction)
-				|| IspwCommand.GetReleaseTaskList.equals(ispwAction)
-				|| IspwCommand.GetReleaseTaskGenerateListing.equals(ispwAction)
-				|| IspwCommand.GetReleaseTaskInfo.equals(ispwAction)
-				|| IspwCommand.GetSetInfo.equals(ispwAction)
-				|| IspwCommand.GetSetTaskList.equals(ispwAction)) {
-			httpMode = HttpMode.GET;
-		}
-
-		return httpMode;
 	}
 	
 	public static ListBoxModel buildConnectionIdItems(@AncestorInPath Jenkins context, @QueryParameter String connectionId,

@@ -3,6 +3,7 @@ package com.compuware.ispw.restapi.action;
 import java.io.PrintStream;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import com.compuware.ispw.restapi.HttpMode;
 import com.compuware.ispw.restapi.IspwContextPathBean;
 import com.compuware.ispw.restapi.IspwRequestBean;
 import com.compuware.ispw.restapi.util.ReflectUtils;
@@ -65,4 +66,9 @@ public abstract class AbstractGetAction implements IAction {
 		return logger;
 	}
 
+	@Override
+	public HttpMode getHttpMode()
+	{
+		return HttpMode.GET;
+	}
 }

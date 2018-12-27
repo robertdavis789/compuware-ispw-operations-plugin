@@ -58,6 +58,7 @@ import jenkins.model.Jenkins;
  * @author Janario Oliveira
  * @author Sam Zhou
  */
+@SuppressWarnings("deprecation")
 public class IspwRestApiRequest extends Builder {
 
 	private @Nonnull String url = StringUtils.EMPTY;
@@ -312,7 +313,7 @@ public class IspwRestApiRequest extends Builder {
 			logger.println("...getting buildTag=" + buildTag + ", webhookToken=" + webhookToken);
 
 		IAction action = ReflectUtils.createAction(ispwAction, logger);
-		httpMode = RestApiUtils.resetHttpMode(ispwAction);
+		httpMode = action.getHttpMode();
 		
 		if (!ReflectUtils.isActionInstantiated(action))
 		{

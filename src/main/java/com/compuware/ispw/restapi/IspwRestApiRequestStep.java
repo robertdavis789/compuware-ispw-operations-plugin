@@ -329,7 +329,7 @@ public final class IspwRestApiRequestStep extends AbstractStepImpl {
 				logger.println("...getting buildTag=" + buildTag + ", webhookToken=" + webhookToken);
 
 			IAction action = ReflectUtils.createAction(step.ispwAction, logger);
-			step.httpMode = RestApiUtils.resetHttpMode(step.ispwAction);
+			step.httpMode = action.getHttpMode();
 			
 			if (!ReflectUtils.isActionInstantiated(action))
 			{

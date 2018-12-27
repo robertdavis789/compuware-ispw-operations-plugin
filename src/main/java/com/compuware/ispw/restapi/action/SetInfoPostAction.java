@@ -7,6 +7,7 @@ import com.compuware.ces.communications.service.data.EventCallback;
 import com.compuware.ces.model.BasicAuthentication;
 import com.compuware.ces.model.HttpHeader;
 import com.compuware.ispw.model.rest.SetInfo;
+import com.compuware.ispw.restapi.HttpMode;
 import com.compuware.ispw.restapi.IspwContextPathBean;
 import com.compuware.ispw.restapi.IspwRequestBean;
 import com.compuware.ispw.restapi.JsonProcessor;
@@ -141,5 +142,10 @@ public abstract class SetInfoPostAction implements IAction {
 		return logger;
 	}
 
+	@Override
+	public HttpMode getHttpMode()
+	{
+		return HttpMode.POST;
+	}
 	
 }
