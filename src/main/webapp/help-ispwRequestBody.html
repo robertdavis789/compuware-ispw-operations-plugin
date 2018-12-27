@@ -1,554 +1,581 @@
-<div><br>
-<strong>Optional common properties for those actions with webhook
-callback</strong>
-<br>
-<table border="1">
-<tbody>
-<tr>
-<td>httpHeaders</td>
-<td>global custom headers used for all, colon and semicolon
-separated. For example, n1:v1;n2:v2;n3:v3.</td>
-</tr>
-<tr>
-<td>credentials</td>
-<td>global credentials used for all call backs. User name
-and password are colon separated.</td>
-</tr>
-<tr>
-<td>events.name</td>
-<td>event name</td>
-</tr>
-<tr>
-<td>events.body</td>
-<td>body for callback, required if having events</td>
-</tr>
-<tr>
-<td>events.httpHeaders</td>
-<td>custom headers - override global headers</td>
-</tr>
-<tr>
-<td>events.credentials</td>
-<td>used if 3rd party requires basic authentication -
-overrides global credentials</td>
-</tr>
-</tbody>
-</table>
-<!--GenerateTasksInAssignment/GenerateTasksInRelease-->
-<br>
-<strong>GenerateTasksInAssignment / GenerateTasksInRelease
-actions (Ignore 'events' properties if no webhook callback):</strong>
-<br>
-Required:
-<table border="1">
-<tbody>
-<tr><td>runtimeConfiguration</td><td>see ISPW administrator for valid values</td></tr><tr>
-<td>assignmentId (GenerateTasksInAssignment) or releaseId
-(GenerateTasksInRelease)</td>
-<td>The container ID for which you intend to generate tasks.</td>
-</tr>
-<tr>
-<td>level</td>
-<td>All tasks in the container at this level will be
-generated</td>
-</tr>
-</tbody>
-</table>
-Optional:
-<table border="1">
-<tbody>
-<tr>
-<td>mname</td>
-<td>component with this name in the container will be
-generated</td>
-</tr>
-<tr>
-<td>mtype</td>
-<td>component with this type in the container will be
-generated</td>
-</tr>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
 
-<tr>
-<td>autoDeploy</td>
-<td>promotes can be set up to automatically Deploy as well
-by an option set up by the ISPW. The default is to not use Auto Deploy</td>
-</tr>
-</tbody>
-</table>
-Example:
-<table border="1">
-<tbody>
-<tr>
-<td>GenerateTasksInAssignment</td>
-<td>GenerateTasksInRelease</td>
-</tr>
-<tr>
-<td>
-<pre>runtimeConfiguration=TPZP<br>assignmentId=PLAY000313<br>level=DEV2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Generated<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
-</td>
-<td>
-<pre>runtimeConfiguration=TPZP<br>releaseId=JKGENRELID<br>level=DEV2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Generated<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
-</td>
-</tr>
-</tbody>
-</table>
-<!--PromoteAssignment/PromoteRelease-->
-<br>
-<strong>PromoteAssignment / PromoteRelease actions (Ignore
-'events' properties if no webhook callback):</strong>
-<br>
-Required:
-<table border="1">
-<tbody>
-<tr><td>runtimeConfiguration</td><td>see ISPW administrator for valid values</td></tr><tr>
-<td>assignmentId (PromoteAssignment) or releaseId
-(PromoteRelease)</td>
-<td>The container ID for which you intend to promote tasks.</td>
-</tr>
-<tr>
-<td>level</td>
-<td>All tasks in the release at this level will be generated</td>
-</tr>
-</tbody>
-</table>
-Optional:
-<table border="1">
-<tbody>
-<tr>
-<td>mname</td>
-<td>component with this name in the container will be
-promoted</td>
-</tr>
-<tr>
-<td>mtype</td>
-<td>component with this type in the container will be
-promoted</td>
-</tr>
-<tr>
-<td>override<br></td>
-<td>override the higher version if &nbsp;presented in the next level. Default to no override.<br></td>
-</tr>
-<tr>
-<td>changeType</td>
-<td>optional, S for standard, I for incidental, or E for
-emergency. Default value of S.</td>
-</tr>
-<tr>
-<td>executionStatus</td>
-<td>I for immediate execution or at start date/time, H to
-create request in hold</td>
-</tr>
-<tr>
-<td>autoDeploy</td>
-<td>promotes can be set up to automatically Deploy as well
-by an option set up by the ISPW. The default is to not use Auto Deploy</td>
-</tr>
-</tbody>
-</table>
-Example:
-<table border="1">
-<tbody>
-<tr>
-<td align="left">PromoteAssignment</td>
-<td align="left">PromoteRelease</td>
-</tr>
-<tr>
-<td>
-<pre>runtimeConfiguration=TPZP<br>assignmentId=PLAY000313<br>level=DEV2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional if use webhook callback in pipeline<br>events.name=Complete<br>events.body=Promoted<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
-</td>
-<td>
-<pre>runtimeConfiguration=TPZP<br>releaseId=JKGENRELID<br>level=DEV2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional if use webhook callback in pipeline<br>events.name=Complete<br>events.body=Promoted<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
-</td>
-</tr>
-</tbody>
-</table>
-<!--DeployAsignment/DeployRelease--><br>
-<strong>DeployAsignment / DeployRelease actions (Ignore 'events'
-properties if no webhook callback):</strong>
-<br>
-Required:
-<table border="1">
-<tbody>
-<tr><td>runtimeConfiguration</td><td>see ISPW administrator for valid values</td></tr><tr>
-<td>assignmentId (DeployAsignment) or releaseId
-(DeployRelease)</td>
-<td>The container for which you intend to deploy tasks.</td>
-</tr>
-<tr>
-<td>level</td>
-<td>All tasks in the container at this level will be
-generated</td>
-</tr>
-</tbody>
-</table>
-Optional:
-<table border="1">
-<tbody>
-<tr>
-<td>mname</td>
-<td>component with this name in the container will be
-deployed</td>
-</tr>
-<tr>
-<td>mtype</td>
-<td>component with this type in the container will be
-deployed</td>
-</tr>
-
-<tr>
-<td>changeType</td>
-<td>S for standard, I for incidental, or E for emergency.
-Default value of S</td>
-</tr>
-<tr>
-<td>executionStatus</td>
-<td>I for immediate execution or at start date/time, H to
-create request in hold</td>
-</tr>
-<tr>
-<td>dpenvlst</td>
-<td>the DPENVLST parameter</td>
-</tr>
-<tr>
-<td>system</td>
-<td>allows you to specify a specific System for the Deploy</td>
-</tr>
-</tbody>
-</table>
-Example:
-<table border="1">
-<tbody>
-<tr>
-<td>DeployAsignment</td>
-<td> </td>
-</tr>
-<tr>
-<td>
-<pre>runtimeConfiguration=TPZP<br>assignmentId=PLAY000313<br>level=QA<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Deployed<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
-</td>
-<td>
-<pre>runtimeConfiguration=TPZP<br>releaseId=JKGENRELID<br>level=QA<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Deployed<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
-</td>
-</tr>
-</tbody>
-</table>
-<!--RegressAsignment/RegressRelease-->
-<br>
-<strong>RegressAsignment / RegressRelease actions (Ignore
-'events' properties if no webhook callback):</strong>
-<br>
-Required:
-<table border="1">
-<tbody>
-<tr><td>runtimeConfiguration</td><td>see ISPW administrator for valid values</td></tr><tr>
-<td>assignmentId (RegressAsignment) or releaseId
-(RegressRelease)</td>
-<td>The container for which you intend to regress the tasks</td>
-</tr>
-<tr>
-<td>level</td>
-<td>All tasks in the container at this level will be
-generated</td>
-</tr>
-</tbody>
-</table>
-Optional:
-<table border="1">
-<tbody>
-<tr>
-<td>mname</td>
-<td>component with this name in the container will be
-regressed</td>
-</tr>
-<tr>
-<td>mtype</td>
-<td>component with this type in the container will be
-regressed</td>
-</tr>
-
-<tr>
-<td>changeType</td>
-<td>S for standard, I for incidental, or E for emergency.
-Default value of S</td>
-</tr>
-<tr>
-<td>executionStatus</td>
-<td>I for immediate execution or at start date/time, H to
-create request in hold</td>
-</tr>
-</tbody>
-</table>
-Example:
-<table border="1">
-<tbody>
-<tr>
-<td>RegressAsignment</td>
-<td>RegressRelease</td>
-</tr>
-<tr>
-<td>
-<pre>runtimeConfiguration=TPZP<br>assignmentId=PLAY000313<br>level=STG2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional, if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Regressed<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
-</td>
-<td>
-<pre>runtimeConfiguration=TPZP<br>releaseId=JKGENRELID<br>level=STG2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional, if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Regressed<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
-</td>
-</tr>
-</tbody>
-</table>
-<!--CreateAssignment/CreateRelease-->
-<br>
-<table border="0">
-<tbody>
-<tr>
-<td align="left"> <strong>CreateAssignment
-action:</strong> </td>
-<td align="left"> <strong>CreateRelease
-action:</strong> </td>
-</tr>
-<tr>
-<td align="left"> Required:
-<table border="1">
-<tbody>
-<tr>
-<td>stream</td>
-<td>ISPW stream name</td>
-</tr>
-<tr>
-<td>application</td>
-<td>ISPW application name</td>
-</tr>
-<tr>
-<td>defaultPath</td>
-<td>the default checkout path</td>
-</tr>
-<tr>
-<td>description</td>
-<td>the description for the assignment</td>
-</tr>
-<tr>
-<td>assignmentPrefix</td>
-<td>assignment prefix</td>
-</tr>
-</tbody>
-</table>
-Optional:
-<table border="1">
-<tbody>
-<tr>
-<td>owner</td>
-<td>the owner of the container</td>
-</tr>
-<tr>
-<td>referenceNumber</td>
-<td>reference number</td>
-</tr>
-<tr>
-<td>releaseId</td>
-<td>release ID</td>
-</tr>
-<tr>
-<td>userTag</td>
-<td>user tag</td>
-</tr>
-</tbody>
-</table>
-Example:
-<table border="1">
-<tbody>
-<tr>
-<td>CreateAssignment</td>
-</tr>
-<tr>
-<td>
-<pre>stream=PLAY<br>application=PLAY<br>defaultPath=DEV2<br>description=MyA01<br>assignmentPrefix=PLAY</pre>
-</td>
-</tr>
-</tbody>
-</table>
-</td>
-<td align="left">Required:
-<table border="1">
-<tbody>
-<tr>
-<td>stream</td>
-<td>ISPW stream name</td>
-</tr>
-<tr>
-<td>application</td>
-<td>ISPW application name</td>
-</tr>
-<tr>
-<td>description</td>
-<td>the description for the release</td>
-</tr>
-<tr>
-<td>releaseId</td>
-<td>release ID</td>
-</tr>
-</tbody>
-</table>
-Optional:
-<table border="1">
-<tbody>
-<tr>
-<td>owner</td>
-<td>the owner of the container</td>
-</tr>
-<tr>
-<td>releasePrefix</td>
-<td>release prefix</td>
-</tr>
-<tr>
-<td>referenceNumber</td>
-<td>reference number</td>
-</tr>
-</tbody>
-</table>
-Example:
-<table border="1">
-<tbody>
-<tr>
-<td>CreateRelease</td>
-</tr>
-<tr>
-<td>
-<pre>stream=PLAY<br>application=PLAY<br>releaseId=MyR01<br>description=MyR01<br>assignmentPrefix=PLAY<br>	</pre>
-</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-</tbody>
-</table>
-<!--GetReleaseTaskInfo/GetReleaseTaskGenerateListing-->
-<br>
-<strong>GetAssignmentInfo / GetAssignmentTaskList actions:</strong>
-<br>
-Required:
-<table border="1">
-<tbody>
-<tr>
-<td>assignmentId</td>
-<td>The assignment ID</td>
-</tr>
-<tr>
-<td>level (GetAssignmentTaskList)</td>
-<td>All tasks in the assignment at this level will be
-displayed</td>
-</tr>
-</tbody>
-</table>
-Example:
-<table border="1">
-<tbody>
-<tr>
-<td>GetAssignmentInfo</td>
-<td>GetAssignmentTaskList</td>
-</tr>
-<tr>
-<td>
-<pre>assignmentId=PLAY000313</pre>
-</td>
-<td>
-<pre>assignmentId=PLAY000313<br>level=DEV2</pre>
-</td>
-</tr>
-</tbody>
-</table>
-<!--GetReleaseTaskInfo/GetReleaseTaskGenerateListing-->
-<br>
-<strong>GetReleaseTaskInfo / GetReleaseTaskGenerateListing /
-GetReleaseTaskList actions:</strong>
-<br>
-Required:
-<table border="1">
-<tbody>
-<tr>
-<td>releaseId</td>
-<td>The release ID</td>
-</tr>
-<tr>
-<td>taskId (GetReleaseTaskInfo/GetReleaseTaskGenerateListing)</td>
-<td>The task ID</td>
-</tr>
-<tr>
-<td>level (GetReleaseTaskList)</td>
-<td>All tasks in the release at this level will be displayed</td>
-</tr>
-</tbody>
-</table>
-Example:
-<table border="1">
-<tbody>
-<tr>
-<td>GetReleaseTaskInfo</td>
-<td>GetReleaseTaskGenerateListing</td>
-<td>GetReleaseTaskList</td>
-</tr>
-<tr>
-<td>
-<pre>releaseId=JKGENRELID<br>taskId=7E1AC3D3DE25</pre>
-</td>
-<td>
-<pre>releaseId=JKGENRELID<br>taskId=7E1AC3D3DE25</pre>
-</td>
-<td>
-<pre>releaseId=JKGENRELID<br>level=DEV2</pre>
-</td>
-</tr>
-</tbody>
-</table>
-<!--GetSetInfoAction-->
-<br>
-<strong>GetSetInfoAction action:</strong>
-<br>
-Required:
-<table border="1">
-<tbody>
-<tr>
-<td>setId</td>
-<td>The set ID you want info on</td>
-</tr>
-</tbody>
-</table>
-Example:
-<table border="1">
-<tbody>
-<tr>
-<td>GetSetInfoAction</td>
-</tr>
-<tr>
-<td>
-<pre>setId=S000015218</pre>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<!--GetSetTaskList-->
-<br>
-<strong>GetSetTaskList action:</strong>
-<br>
-Required:
-<table border="1">
-<tbody>
-<tr>
-<td>setId</td>
-<td>The set ID you want info on</td>
-</tr>
-</tbody>
-</table>
-Example:
-<table border="1">
-<tbody>
-<tr>
-<td>GetSetTaskList</td>
-</tr>
-<tr>
-<td>
-<pre>setId=S000015218</pre>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
+    <meta http-equiv="content-type" content="text/html; charset=windows-1252">
+  </head>
+  <body>
+    <div><br>
+      <strong>Optional common properties for those actions with webhook
+        callback</strong>
+      <br>
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>httpHeaders</td>
+            <td>global custom headers used for all, colon and semicolon
+              separated. For example, n1:v1;n2:v2;n3:v3.</td>
+          </tr>
+          <tr>
+            <td>credentials</td>
+            <td>global credentials used for all call backs. User name
+              and password are colon separated.</td>
+          </tr>
+          <tr>
+            <td>events.name</td>
+            <td>event name</td>
+          </tr>
+          <tr>
+            <td>events.body</td>
+            <td>body for callback, required if having events</td>
+          </tr>
+          <tr>
+            <td>events.httpHeaders</td>
+            <td>custom headers - override global headers</td>
+          </tr>
+          <tr>
+            <td>events.credentials</td>
+            <td>used if 3rd party requires basic authentication -
+              overrides global credentials</td>
+          </tr>
+        </tbody>
+      </table>
+      <!--GenerateTasksInAssignment/GenerateTasksInRelease-->
+      <br>
+      <strong>GenerateTasksInAssignment / GenerateTasksInRelease
+        actions (Ignore 'events' properties if no webhook callback):</strong>
+      <br>
+      Required:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>runtimeConfiguration</td>
+            <td>see ISPW administrator for valid values</td>
+          </tr>
+          <tr>
+            <td>assignmentId (GenerateTasksInAssignment) or releaseId
+              (GenerateTasksInRelease)</td>
+            <td>The container ID for which you intend to generate tasks.</td>
+          </tr>
+          <tr>
+            <td>level</td>
+            <td>All tasks in the container at this level will be
+              generated</td>
+          </tr>
+        </tbody>
+      </table>
+      Optional:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>mname</td>
+            <td>component with this name in the container will be
+              generated</td>
+          </tr>
+          <tr>
+            <td>mtype</td>
+            <td>component with this type in the container will be
+              generated</td>
+          </tr>
+          <tr>
+            <td>autoDeploy</td>
+            <td>promotes can be set up to automatically Deploy as well
+              by an option set up by the ISPW. The default is to not use
+              Auto Deploy</td>
+          </tr>
+        </tbody>
+      </table>
+      Example:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>GenerateTasksInAssignment</td>
+            <td>GenerateTasksInRelease</td>
+          </tr>
+          <tr>
+            <td>
+              <pre>runtimeConfiguration=TPZP<br>assignmentId=PLAY000313<br>level=DEV2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Generated<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
+            </td>
+            <td>
+              <pre>runtimeConfiguration=TPZP<br>releaseId=JKGENRELID<br>level=DEV2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Generated<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <!--PromoteAssignment/PromoteRelease-->
+      <br>
+      <strong>PromoteAssignment / PromoteRelease actions (Ignore
+        'events' properties if no webhook callback):</strong>
+      <br>
+      Required:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>runtimeConfiguration</td>
+            <td>see ISPW administrator for valid values</td>
+          </tr>
+          <tr>
+            <td>assignmentId (PromoteAssignment) or releaseId
+              (PromoteRelease)</td>
+            <td>The container ID for which you intend to promote tasks.</td>
+          </tr>
+          <tr>
+            <td>level</td>
+            <td>All tasks in the release at this level will be generated</td>
+          </tr>
+        </tbody>
+      </table>
+      Optional:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>mname</td>
+            <td>component with this name in the container will be
+              promoted</td>
+          </tr>
+          <tr>
+            <td>mtype</td>
+            <td>component with this type in the container will be
+              promoted</td>
+          </tr>
+          <tr>
+            <td>override<br>
+            </td>
+            <td>override the higher version if &nbsp;presented in the
+              next level. Default to no override.<br>
+            </td>
+          </tr>
+          <tr>
+            <td>changeType</td>
+            <td>optional, S for standard, I for incidental, or E for
+              emergency. Default value of S.</td>
+          </tr>
+          <tr>
+            <td>executionStatus</td>
+            <td>I for immediate execution or at start date/time, H to
+              create request in hold</td>
+          </tr>
+          <tr>
+            <td>autoDeploy</td>
+            <td>promotes can be set up to automatically Deploy as well
+              by an option set up by the ISPW. The default is to not use
+              Auto Deploy</td>
+          </tr>
+        </tbody>
+      </table>
+      Example:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td align="left">PromoteAssignment</td>
+            <td align="left">PromoteRelease</td>
+          </tr>
+          <tr>
+            <td>
+              <pre>runtimeConfiguration=TPZP<br>assignmentId=PLAY000313<br>level=DEV2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional if use webhook callback in pipeline<br>events.name=Complete<br>events.body=Promoted<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
+            </td>
+            <td>
+              <pre>runtimeConfiguration=TPZP<br>releaseId=JKGENRELID<br>level=DEV2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional if use webhook callback in pipeline<br>events.name=Complete<br>events.body=Promoted<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <!--DeployAsignment/DeployRelease--><br>
+      <strong>DeployAsignment / DeployRelease actions (Ignore 'events'
+        properties if no webhook callback):</strong>
+      <br>
+      Required:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>runtimeConfiguration</td>
+            <td>see ISPW administrator for valid values</td>
+          </tr>
+          <tr>
+            <td>assignmentId (DeployAsignment) or releaseId
+              (DeployRelease)</td>
+            <td>The container for which you intend to deploy tasks.</td>
+          </tr>
+          <tr>
+            <td>level</td>
+            <td>All tasks in the container at this level will be
+              generated</td>
+          </tr>
+        </tbody>
+      </table>
+      Optional:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>mname</td>
+            <td>component with this name in the container will be
+              deployed</td>
+          </tr>
+          <tr>
+            <td>mtype</td>
+            <td>component with this type in the container will be
+              deployed</td>
+          </tr>
+          <tr>
+            <td>changeType</td>
+            <td>S for standard, I for incidental, or E for emergency.
+              Default value of S</td>
+          </tr>
+          <tr>
+            <td>executionStatus</td>
+            <td>I for immediate execution or at start date/time, H to
+              create request in hold</td>
+          </tr>
+          <tr>
+            <td>dpenvlst</td>
+            <td>the DPENVLST parameter</td>
+          </tr>
+          <tr>
+            <td>system</td>
+            <td>allows you to specify a specific System for the Deploy</td>
+          </tr>
+        </tbody>
+      </table>
+      Example:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>DeployAsignment</td>
+            <td> DeployRelease</td>
+          </tr>
+          <tr>
+            <td>
+              <pre>runtimeConfiguration=TPZP<br>assignmentId=PLAY000313<br>level=QA<br>#optional<br>mname=TPROG08<br>mtype=COB<br>deployActiveDate=2018-12-17<br>deployActiveTime=10:00:00<br>deployImplementationDate=2018-12-17<br>deployImplementationTime=10:00:00<br>#optional if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Deployed<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library<br></pre>
+            </td>
+            <td>
+              <pre>runtimeConfiguration=TPZP<br>releaseId=JKGENRELID<br>level=QA<br>#optional<br>mname=TPROG08<br>mtype=COB<br>deployActiveDate=2018-12-17<br>deployActiveTime=10:00:00<br>deployImplementationDate=2018-12-17<br>deployImplementationTime=10:00:00<br>#optional if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Deployed<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <!--RegressAsignment/RegressRelease-->
+      <br>
+      <strong>RegressAsignment / RegressRelease actions (Ignore
+        'events' properties if no webhook callback):</strong>
+      <br>
+      Required:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>runtimeConfiguration</td>
+            <td>see ISPW administrator for valid values</td>
+          </tr>
+          <tr>
+            <td>assignmentId (RegressAsignment) or releaseId
+              (RegressRelease)</td>
+            <td>The container for which you intend to regress the tasks</td>
+          </tr>
+          <tr>
+            <td>level</td>
+            <td>All tasks in the container at this level will be
+              generated</td>
+          </tr>
+        </tbody>
+      </table>
+      Optional:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>mname</td>
+            <td>component with this name in the container will be
+              regressed</td>
+          </tr>
+          <tr>
+            <td>mtype</td>
+            <td>component with this type in the container will be
+              regressed</td>
+          </tr>
+          <tr>
+            <td>changeType</td>
+            <td>S for standard, I for incidental, or E for emergency.
+              Default value of S</td>
+          </tr>
+          <tr>
+            <td>executionStatus</td>
+            <td>I for immediate execution or at start date/time, H to
+              create request in hold</td>
+          </tr>
+        </tbody>
+      </table>
+      Example:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>RegressAsignment</td>
+            <td>RegressRelease</td>
+          </tr>
+          <tr>
+            <td>
+              <pre>runtimeConfiguration=TPZP<br>assignmentId=PLAY000313<br>level=STG2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional, if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Regressed<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
+            </td>
+            <td>
+              <pre>runtimeConfiguration=TPZP<br>releaseId=JKGENRELID<br>level=STG2<br>#optional<br>mname=TPROG08<br>mtype=COB<br>#optional, if use webhook callback in pipeline<br>events.name=Completed<br>events.body=Regressed<br>events.httpHeaders=Jenkins-Crumb:no-crumb<br>events.credentials=admin:library</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <!--CreateAssignment/CreateRelease-->
+      <br>
+      <table border="0">
+        <tbody>
+          <tr>
+            <td align="left"> <strong>CreateAssignment
+                action:</strong> </td>
+            <td align="left"> <strong>CreateRelease
+                action:</strong> </td>
+          </tr>
+          <tr>
+            <td align="left"> Required:
+              <table border="1">
+                <tbody>
+                  <tr>
+                    <td>stream</td>
+                    <td>ISPW stream name</td>
+                  </tr>
+                  <tr>
+                    <td>application</td>
+                    <td>ISPW application name</td>
+                  </tr>
+                  <tr>
+                    <td>defaultPath</td>
+                    <td>the default checkout path</td>
+                  </tr>
+                  <tr>
+                    <td>description</td>
+                    <td>the description for the assignment</td>
+                  </tr>
+                  <tr>
+                    <td>assignmentPrefix</td>
+                    <td>assignment prefix</td>
+                  </tr>
+                </tbody>
+              </table>
+              Optional:
+              <table border="1">
+                <tbody>
+                  <tr>
+                    <td>owner</td>
+                    <td>the owner of the container</td>
+                  </tr>
+                  <tr>
+                    <td>referenceNumber</td>
+                    <td>reference number</td>
+                  </tr>
+                  <tr>
+                    <td>releaseId</td>
+                    <td>release ID</td>
+                  </tr>
+                  <tr>
+                    <td>userTag</td>
+                    <td>user tag</td>
+                  </tr>
+                </tbody>
+              </table>
+              Example:
+              <table border="1">
+                <tbody>
+                  <tr>
+                    <td>CreateAssignment</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <pre>stream=PLAY<br>application=PLAY<br>defaultPath=DEV2<br>description=MyA01<br>assignmentPrefix=PLAY</pre>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+            <td align="left">Required:
+              <table border="1">
+                <tbody>
+                  <tr>
+                    <td>stream</td>
+                    <td>ISPW stream name</td>
+                  </tr>
+                  <tr>
+                    <td>application</td>
+                    <td>ISPW application name</td>
+                  </tr>
+                  <tr>
+                    <td>description</td>
+                    <td>the description for the release</td>
+                  </tr>
+                  <tr>
+                    <td>releaseId</td>
+                    <td>release ID</td>
+                  </tr>
+                </tbody>
+              </table>
+              Optional:
+              <table border="1">
+                <tbody>
+                  <tr>
+                    <td>owner</td>
+                    <td>the owner of the container</td>
+                  </tr>
+                  <tr>
+                    <td>releasePrefix</td>
+                    <td>release prefix</td>
+                  </tr>
+                  <tr>
+                    <td>referenceNumber</td>
+                    <td>reference number</td>
+                  </tr>
+                </tbody>
+              </table>
+              Example:
+              <table border="1">
+                <tbody>
+                  <tr>
+                    <td>CreateRelease</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <pre>stream=PLAY<br>application=PLAY<br>releaseId=MyR01<br>description=MyR01<br>assignmentPrefix=PLAY<br>	</pre>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <!--GetReleaseTaskInfo/GetReleaseTaskGenerateListing-->
+      <br>
+      <strong>GetAssignmentInfo / GetAssignmentTaskList actions:</strong>
+      <br>
+      Required:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>assignmentId</td>
+            <td>The assignment ID</td>
+          </tr>
+          <tr>
+            <td>level (GetAssignmentTaskList)</td>
+            <td>All tasks in the assignment at this level will be
+              displayed</td>
+          </tr>
+        </tbody>
+      </table>
+      Example:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>GetAssignmentInfo</td>
+            <td>GetAssignmentTaskList</td>
+          </tr>
+          <tr>
+            <td>
+              <pre>assignmentId=PLAY000313</pre>
+            </td>
+            <td>
+              <pre>assignmentId=PLAY000313<br>level=DEV2</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <!--GetReleaseTaskInfo/GetReleaseTaskGenerateListing-->
+      <br>
+      <strong>GetReleaseTaskInfo / GetReleaseTaskGenerateListing /
+        GetReleaseTaskList actions:</strong>
+      <br>
+      Required:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>releaseId</td>
+            <td>The release ID</td>
+          </tr>
+          <tr>
+            <td>taskId
+              (GetReleaseTaskInfo/GetReleaseTaskGenerateListing)</td>
+            <td>The task ID</td>
+          </tr>
+          <tr>
+            <td>level (GetReleaseTaskList)</td>
+            <td>All tasks in the release at this level will be displayed</td>
+          </tr>
+        </tbody>
+      </table>
+      Example:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>GetReleaseTaskInfo</td>
+            <td>GetReleaseTaskGenerateListing</td>
+            <td>GetReleaseTaskList</td>
+          </tr>
+          <tr>
+            <td>
+              <pre>releaseId=JKGENRELID<br>taskId=7E1AC3D3DE25</pre>
+            </td>
+            <td>
+              <pre>releaseId=JKGENRELID<br>taskId=7E1AC3D3DE25</pre>
+            </td>
+            <td>
+              <pre>releaseId=JKGENRELID<br>level=DEV2</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <!--GetSetInfoAction-->
+      <br>
+      <strong>GetSetInfoAction action:</strong>
+      <br>
+      Required:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>setId</td>
+            <td>The set ID you want info on</td>
+          </tr>
+        </tbody>
+      </table>
+      Example:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>GetSetInfoAction</td>
+          </tr>
+          <tr>
+            <td>
+              <pre>setId=S000015218</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!--GetSetTaskList-->
+    <br>
+    <strong>GetSetTaskList action:</strong>
+    <br>
+    Required:
+    <table border="1">
+      <tbody>
+        <tr>
+          <td>setId</td>
+          <td>The set ID you want info on</td>
+        </tr>
+      </tbody>
+    </table>
+    Example:
+    <table border="1">
+      <tbody>
+        <tr>
+          <td>GetSetTaskList</td>
+        </tr>
+        <tr>
+          <td>
+            <pre>setId=S000015218</pre>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
