@@ -1,14 +1,6 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-  <head>
-
-    <meta http-equiv="content-type" content="text/html; charset=windows-1252">
-  </head>
-  <body>
     <div><br>
       <strong>Optional common properties for those actions with webhook
-        callback</strong>
-      <br>
+        callback</strong> <br>
       <table border="1">
         <tbody>
           <tr>
@@ -40,11 +32,9 @@
           </tr>
         </tbody>
       </table>
-      <!--GenerateTasksInAssignment/GenerateTasksInRelease-->
-      <br>
-      <strong>GenerateTasksInAssignment / GenerateTasksInRelease
-        actions (Ignore 'events' properties if no webhook callback):</strong>
-      <br>
+      <!--GenerateTasksInAssignment/GenerateTasksInRelease--> <br>
+      <strong>GenerateTasksInAssignment / GenerateTasksInRelease actions
+        (Ignore 'events' properties if no webhook callback):</strong> <br>
       Required:
       <table border="1">
         <tbody>
@@ -102,11 +92,9 @@
           </tr>
         </tbody>
       </table>
-      <!--PromoteAssignment/PromoteRelease-->
-      <br>
+      <!--PromoteAssignment/PromoteRelease--> <br>
       <strong>PromoteAssignment / PromoteRelease actions (Ignore
-        'events' properties if no webhook callback):</strong>
-      <br>
+        'events' properties if no webhook callback):</strong> <br>
       Required:
       <table border="1">
         <tbody>
@@ -182,8 +170,7 @@
       </table>
       <!--DeployAsignment/DeployRelease--><br>
       <strong>DeployAsignment / DeployRelease actions (Ignore 'events'
-        properties if no webhook callback):</strong>
-      <br>
+        properties if no webhook callback):</strong> <br>
       Required:
       <table border="1">
         <tbody>
@@ -253,11 +240,9 @@
           </tr>
         </tbody>
       </table>
-      <!--RegressAsignment/RegressRelease-->
-      <br>
-      <strong>RegressAsignment / RegressRelease actions (Ignore
-        'events' properties if no webhook callback):</strong>
-      <br>
+      <!--RegressAsignment/RegressRelease--> <br>
+      <strong>RegressAsignment / RegressRelease actions (Ignore 'events'
+        properties if no webhook callback):</strong> <br>
       Required:
       <table border="1">
         <tbody>
@@ -319,15 +304,13 @@
           </tr>
         </tbody>
       </table>
-      <!--CreateAssignment/CreateRelease-->
-      <br>
+      <!--CreateAssignment/CreateRelease--> <br>
       <table border="0">
         <tbody>
           <tr>
-            <td align="left"> <strong>CreateAssignment
-                action:</strong> </td>
-            <td align="left"> <strong>CreateRelease
-                action:</strong> </td>
+            <td align="left"> <strong>CreateAssignment action:</strong>
+            </td>
+            <td align="left"> <strong>CreateRelease action:</strong> </td>
           </tr>
           <tr>
             <td align="left"> Required:
@@ -445,8 +428,7 @@
           </tr>
         </tbody>
       </table>
-      <!--GetReleaseTaskInfo/GetReleaseTaskGenerateListing-->
-      <br>
+      <!--GetReleaseTaskInfo/GetReleaseTaskGenerateListing--> <br>
       <strong>GetAssignmentInfo / GetAssignmentTaskList actions:</strong>
       <br>
       Required:
@@ -480,11 +462,9 @@
           </tr>
         </tbody>
       </table>
-      <!--GetReleaseTaskInfo/GetReleaseTaskGenerateListing-->
-      <br>
+      <!--GetReleaseTaskInfo/GetReleaseTaskGenerateListing--> <br>
       <strong>GetReleaseTaskInfo / GetReleaseTaskGenerateListing /
-        GetReleaseTaskList actions:</strong>
-      <br>
+        GetReleaseTaskList actions:</strong> <br>
       Required:
       <table border="1">
         <tbody>
@@ -524,10 +504,8 @@
           </tr>
         </tbody>
       </table>
-      <!--GetSetInfoAction-->
-      <br>
-      <strong>GetSetInfoAction action:</strong>
-      <br>
+      <!--GetSetInfoAction--> <br>
+      <strong>GetSetInfo action:</strong> <br>
       Required:
       <table border="1">
         <tbody>
@@ -550,32 +528,29 @@
           </tr>
         </tbody>
       </table>
+      <!--GetSetTaskList--> <br>
+      <strong>GetSetTaskList action:</strong> <br>
+      Required:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>setId</td>
+            <td>The set ID you want info on</td>
+          </tr>
+        </tbody>
+      </table>
+      Example:
+      <table border="1">
+        <tbody>
+          <tr>
+            <td>GetSetTaskList</td>
+          </tr>
+          <tr>
+            <td>
+              <pre>setId=S000015218</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <!--GetSetTaskList-->
-    <br>
-    <strong>GetSetTaskList action:</strong>
-    <br>
-    Required:
-    <table border="1">
-      <tbody>
-        <tr>
-          <td>setId</td>
-          <td>The set ID you want info on</td>
-        </tr>
-      </tbody>
-    </table>
-    Example:
-    <table border="1">
-      <tbody>
-        <tr>
-          <td>GetSetTaskList</td>
-        </tr>
-        <tr>
-          <td>
-            <pre>setId=S000015218</pre>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </body>
-</html>
+
