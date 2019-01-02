@@ -316,6 +316,18 @@ public final class IspwRestApiRequestStep extends AbstractStepImpl {
 		@StepContextParameter
 		private transient TaskListener listener;
 
+		public ResponseContentSupplier runExec(HttpRequestExecution exec) throws InterruptedException, IOException {
+			Launcher launcher = getContext().get(Launcher.class);
+			ResponseContentSupplier supplier = null;
+			if (launcher != null) {
+				supplier = launcher.getChannel().call(exec);
+			} else {
+				supplier = exec.call();
+			}
+
+			return supplier;
+		}
+		
 		@Override
 		protected ResponseContentSupplier run() throws Exception {
 			PrintStream logger = listener.getLogger();
@@ -402,13 +414,7 @@ public final class IspwRestApiRequestStep extends AbstractStepImpl {
 			HttpRequestExecution exec =
 					HttpRequestExecution.from(step, listener, this);
 
-			Launcher launcher = getContext().get(Launcher.class);
-			ResponseContentSupplier supplier = null;
-			if (launcher != null) {
-				supplier = launcher.getChannel().call(exec);
-			} else {
-				supplier = exec.call();
-			}
+			ResponseContentSupplier supplier = runExec(exec);
 			
 			String responseJson = supplier.getContent();
 			if (RestApiUtils.isIspwDebugMode())
@@ -430,7 +436,7 @@ public final class IspwRestApiRequestStep extends AbstractStepImpl {
 						Thread.sleep(Constants.POLLING_INTERVAL);
 						HttpRequestExecution poller = HttpRequestExecution
 								.createPoller(setId, step, listener, this);
-						ResponseContentSupplier pollerSupplier = launcher.getChannel().call(poller);
+						ResponseContentSupplier pollerSupplier = runExec(poller);
 						String pollingJson = pollerSupplier.getContent();
 
 						JsonProcessor jsonProcessor = new JsonProcessor();
