@@ -19,7 +19,8 @@
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>2.16</version>
+	    <version>3.43</version>
+	    <relativePath />
 	</parent>
 
 	<groupId>com.compuware.jenkins</groupId>
@@ -70,7 +71,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<jenkins.version>2.60.3</jenkins.version>
+		<jenkins.version>2.130</jenkins.version>
+		<java.level>8</java.level>
 		<workflow.version>1.10</workflow.version>
 		<maven.test.skip>false</maven.test.skip>
 		<enforcer.skip>true</enforcer.skip>
