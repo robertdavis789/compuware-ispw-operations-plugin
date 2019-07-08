@@ -1,0 +1,32 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:cc="/lib/compuware">
+
+    <f:entry field="gitRepoUrl" title="GIT Repository URL" help="">
+        <f:textbox default="${descriptor.gitRepoUrl}"/>
+    </f:entry>
+
+	<f:entry title="GIT Credentials" field="gitCredentialsId" help="">
+		<c:select/>
+	</f:entry>
+
+	<f:entry title="ISPW Host connection" field="connectionId" help="/plugin/compuware-ispw-operations/help-connectionId.html">
+    	<cc:hostSelect default="${descriptor.connectionId}"/>
+	</f:entry>
+
+	<f:entry title="ISPW Runtime Configuration" field="runtimeConfig" help="">
+		<f:textbox default="${descriptor.runtimeConfig}"/>
+	</f:entry>
+
+	<f:entry title="ISPW Credentials" field="credentialsId" help="">
+		<c:select/>
+	</f:entry>
+    
+	<f:entry title="Stream" field="stream" help="">
+		<f:textbox default="${descriptor.stream}"/>
+	</f:entry>
+
+	<f:entry title="Application" field="app" help="">
+		<f:textbox default="${descriptor.app}"/>
+	</f:entry>
+
+ </j:jelly>

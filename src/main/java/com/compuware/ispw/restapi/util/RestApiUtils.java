@@ -20,6 +20,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.compuware.ces.model.BasicAuthentication;
 import com.compuware.ces.model.HttpHeader;
@@ -29,7 +30,7 @@ import com.compuware.ispw.restapi.JsonProcessor;
 import com.compuware.ispw.restapi.ResponseContentSupplier;
 import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
 import com.compuware.jenkins.common.configuration.HostConnection;
-
+import hudson.Util;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
@@ -221,6 +222,36 @@ public class RestApiUtils {
 
 		return model;
 	}
+	
+	
+	public static ListBoxModel buildStandardCredentialsIdItems(@AncestorInPath Jenkins context, @QueryParameter String credentialsId,
+			@AncestorInPath Item project)
+	{
+		List<StandardUsernamePasswordCredentials> creds = CredentialsProvider.lookupCredentials(
+				StandardUsernamePasswordCredentials.class, project, ACL.SYSTEM,
+				Collections.<DomainRequirement> emptyList());
+
+		StandardListBoxModel model = new StandardListBoxModel();
+
+		model.add(new Option(StringUtils.EMPTY, StringUtils.EMPTY, false));
+
+		for (StandardUsernamePasswordCredentials c : creds)
+		{
+			boolean isSelected = false;
+
+			if (credentialsId != null)
+			{
+				isSelected = credentialsId.matches(c.getId());
+			}
+
+			String description = Util.fixEmptyAndTrim(c.getDescription());
+			model.add(new Option(c.getUsername() + (description != null ? " (" + description + ")" : StringUtils.EMPTY), //$NON-NLS-1$ //$NON-NLS-2$
+					c.getId(), isSelected));
+		}
+
+		return model;
+	}
+	
 	
 	public static ListBoxModel buildIspwActionItems(
 			@AncestorInPath Jenkins context, @QueryParameter String ispwAction,
