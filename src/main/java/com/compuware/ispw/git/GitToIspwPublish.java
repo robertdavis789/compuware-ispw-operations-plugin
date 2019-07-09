@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import com.compuware.ispw.restapi.util.RestApiUtils;
@@ -42,6 +43,15 @@ public class GitToIspwPublish extends Builder
 	private String stream = DescriptorImpl.stream;
 	private String app = DescriptorImpl.app;
 
+	// Branch mapping
+	private String branchMapping = DescriptorImpl.branchMapping;
+	private String containerDesc = DescriptorImpl.containerDesc;
+	private String containerPref = DescriptorImpl.containerPref;
+	
+	@DataBoundConstructor
+	public GitToIspwPublish() {
+	}
+	
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
 			throws InterruptedException, IOException {
@@ -69,11 +79,25 @@ public class GitToIspwPublish extends Builder
 		public static final String runtimeConfig = StringUtils.EMPTY;
 		public static final String stream = StringUtils.EMPTY;
 		public static final String app = StringUtils.EMPTY;
-
+		
+		// Branch mapping
+		public static final String branchMapping = "#The following messages are commented out to show how to use the 'Branch Mapping' field.\n"
+				+"#Click on the help button to the right of the screen for examples of how to populate this field\n"
+				+"#\n"
+				+"#*/dev1/ => DEV1\n"
+				+"#*/dev2/ => DEV2\n";
+		public static final String containerDesc = StringUtils.EMPTY;
+		public static final String containerPref = StringUtils.EMPTY;
+		
 		public DescriptorImpl() {
 			load();
 		}
 
+		@Override
+		public String getDisplayName() {
+			return "GIT to ISPW Integration";
+		}
+		
 		@SuppressWarnings("rawtypes")
 		@Override
 		public boolean isApplicable(Class<? extends AbstractProject> aClass)
@@ -99,6 +123,11 @@ public class GitToIspwPublish extends Builder
 			return RestApiUtils.buildStandardCredentialsIdItems(context, credentialsId, project);
 		}
 
+		public ListBoxModel doFillContainerPrefItems(@AncestorInPath Jenkins context, @QueryParameter String containerPref,
+				@AncestorInPath Item project)
+		{
+			return RestApiUtils.buildContainerPrefItems(context, credentialsId, project);
+		}
 		
 	}
 
@@ -223,6 +252,57 @@ public class GitToIspwPublish extends Builder
 	public void setApp(String app)
 	{
 		this.app = app;
+	}
+
+	/**
+	 * @return the branchMapping
+	 */
+	public String getBranchMapping()
+	{
+		return branchMapping;
+	}
+
+	/**
+	 * @param branchMapping the branchMapping to set
+	 */
+	@DataBoundSetter
+	public void setBranchMapping(String branchMapping)
+	{
+		this.branchMapping = branchMapping;
+	}
+
+	/**
+	 * @return the containerDesc
+	 */
+	public String getContainerDesc()
+	{
+		return containerDesc;
+	}
+
+	/**
+	 * @param containerDesc the containerDesc to set
+	 */
+	@DataBoundSetter
+	public void setContainerDesc(String containerDesc)
+	{
+		this.containerDesc = containerDesc;
+	}
+
+	/**
+	 * @return the containerPref
+	 */
+	public String getContainerPref()
+	{
+		return containerPref;
+	}
+
+	/**
+	 * @param containerPref the containerPref to set
+	 */
+	@DataBoundSetter
+	public void setContainerPref(String containerPref)
+	{
+		this.containerPref = containerPref;
 	}
 	
 }

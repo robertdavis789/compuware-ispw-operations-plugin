@@ -252,6 +252,29 @@ public class RestApiUtils {
 		return model;
 	}
 	
+	public static ListBoxModel buildContainerPrefItems(@AncestorInPath Jenkins context, @QueryParameter String containerPref,
+			@AncestorInPath Item project)
+	{
+		ListBoxModel model = new ListBoxModel();
+
+		/*
+		if (Constants.CONTAINER_PREF_REUSE.equals(containerPref))
+		{
+			model.add(new Option(Constants.CONTAINER_PRE_NEW, Constants.CONTAINER_PRE_NEW, false));
+			model.add(new Option(Constants.CONTAINER_PREF_REUSE, Constants.CONTAINER_PREF_REUSE, true));
+		}
+		else
+		{
+			model.add(new Option(Constants.CONTAINER_PRE_NEW, Constants.CONTAINER_PRE_NEW, true));
+			model.add(new Option(Constants.CONTAINER_PREF_REUSE, Constants.CONTAINER_PREF_REUSE, false));
+		}
+		*/
+		model.add(new Option(Constants.CONTAINER_PRE_NEW, Constants.CONTAINER_PRE_NEW));
+		model.add(new Option(Constants.CONTAINER_PREF_REUSE, Constants.CONTAINER_PREF_REUSE));
+		
+		return model;
+	}
+	
 	
 	public static ListBoxModel buildIspwActionItems(
 			@AncestorInPath Jenkins context, @QueryParameter String ispwAction,

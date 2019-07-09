@@ -32,4 +32,6 @@ public class Constants {
 	public static final int POLLING_COUNT = 120;
 	public static final int POLLING_INTERVAL = 2000;
 
+	public static String CONTAINER_PREF_REUSE = "Re-use ISPW container per commit if not closed or cancelled";
+	public static String CONTAINER_PRE_NEW = "New ISPW container per commit";
 }
