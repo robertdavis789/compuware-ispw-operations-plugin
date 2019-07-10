@@ -20,6 +20,7 @@ import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
 import com.compuware.jenkins.common.configuration.HostConnection;
 import com.compuware.jenkins.common.utils.ArgumentUtils;
 import com.compuware.jenkins.common.utils.CommonConstants;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -175,18 +176,17 @@ public class GitToIspwPublish extends Builder
 		logger.println("Batch script: " + args.toString());
 		
 		// invoke the CLI (execute the batch/shell script)
-//		int exitValue = launcher.launch().cmds(args).envs(env).stdout(logger).pwd(workDir).join();
-//		if (exitValue != 0)
-//		{
-//			throw new AbortException("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
-//		}
-//		else
-//		{
-//			logger.println("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
-//			return true;
-//		}
-		
-		return true;
+		int exitValue = launcher.launch().cmds(args).envs(env).stdout(logger).pwd(workDir).join();
+		if (exitValue != 0)
+		{
+			throw new AbortException("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		else
+		{
+			logger.println("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
+			return true;
+		}
+
 	}
 	
 	@Extension
