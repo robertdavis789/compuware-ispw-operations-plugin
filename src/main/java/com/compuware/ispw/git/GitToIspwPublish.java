@@ -151,7 +151,6 @@ public class GitToIspwPublish extends Builder
 
 		if (StringUtils.isNotBlank(runtimeConfig))
 		{
-			runtimeConfig = ArgumentUtils.escapeForScript(runtimeConfig);
 			args.add(Constants.ISPW_SERVER_CONFIG_PARAM, runtimeConfig);
 		}
 
@@ -164,7 +163,7 @@ public class GitToIspwPublish extends Builder
 		args.add(Constants.GIT_USERID_PARAM, gitUserId);
 		args.add(Constants.GIT_PW_PARAM);
 		args.add(gitPassword, true);
-		args.add(Constants.GIT_REPO_URL_PARAM, gitRepoUrl);
+		args.add(Constants.GIT_REPO_URL_PARAM, ArgumentUtils.escapeForScript(gitRepoUrl));
 		args.add(Constants.GIT_REF_PARAM, ref);
 		args.add(Constants.GIT_HASH_PARAM, hash);
 		
