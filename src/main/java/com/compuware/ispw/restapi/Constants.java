@@ -34,4 +34,7 @@ public class Constants {
 
 	public static String CONTAINER_PREF_REUSE = "Re-use ISPW container per commit if not closed or cancelled";
 	public static String CONTAINER_PRE_NEW = "New ISPW container per commit";
+	
+	public static final String SCM_DOWNLOADER_CLI_BAT = "IspwCLI.bat";
+	public static final String SCM_DOWNLOADER_CLI_SH = "IspwCLI.sh";
 }

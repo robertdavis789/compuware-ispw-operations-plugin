@@ -5,6 +5,7 @@ package com.compuware.ispw.git;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
@@ -12,9 +13,16 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.compuware.ispw.restapi.Constants;
 import com.compuware.ispw.restapi.util.RestApiUtils;
+import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
+import com.compuware.jenkins.common.configuration.HostConnection;
+import com.compuware.jenkins.common.utils.ArgumentUtils;
+import com.compuware.jenkins.common.utils.CommonConstants;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
@@ -22,8 +30,10 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Item;
+import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import hudson.util.ArgumentListBuilder;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
@@ -70,6 +80,50 @@ public class GitToIspwPublish extends Builder
 		logger.println("debugMsg=" + debugMsg);
 		logger.println("hash=" + hash + ", ref=" + ref);
 
+		CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
+		
+		assert launcher!=null;
+		VirtualChannel vChannel = launcher.getChannel();
+		
+		assert vChannel!=null;
+		Properties remoteProperties = vChannel.call(new RemoteSystemProperties());
+		String remoteFileSeparator = remoteProperties.getProperty(CommonConstants.FILE_SEPARATOR_PROPERTY_KEY);
+		String osFile = launcher.isUnix() ? Constants.SCM_DOWNLOADER_CLI_SH : Constants.SCM_DOWNLOADER_CLI_BAT;
+
+		String cliScriptFile = globalConfig.getTopazCLILocation(launcher) + remoteFileSeparator + osFile;
+		logger.println("cliScriptFile: " + cliScriptFile); //$NON-NLS-1$
+		String cliScriptFileRemote = new FilePath(vChannel, cliScriptFile).getRemote();
+		logger.println("cliScriptFileRemote: " + cliScriptFileRemote); //$NON-NLS-1$
+
+		ArgumentListBuilder args = new ArgumentListBuilder();
+		
+		// server args
+		HostConnection connection = globalConfig.getHostConnection(connectionId);
+		String host = ArgumentUtils.escapeForScript(connection.getHost());
+		String port = ArgumentUtils.escapeForScript(connection.getPort());
+		String protocol = connection.getProtocol();
+		String codePage = connection.getCodePage();
+		String timeout = ArgumentUtils.escapeForScript(connection.getTimeout());
+		StandardUsernamePasswordCredentials credentials = globalConfig.getLoginInformation(build.getParent(),
+				credentialsId);
+		String userId = ArgumentUtils.escapeForScript(credentials.getUsername());
+		String password = ArgumentUtils.escapeForScript(credentials.getPassword().getPlainText());
+		String targetFolder = ArgumentUtils.escapeForScript(build.getWorkspace().getRemote());
+		String topazCliWorkspace = build.getWorkspace().getRemote() + remoteFileSeparator + CommonConstants.TOPAZ_CLI_WORKSPACE;
+		logger.println("TopazCliWorkspace: " + topazCliWorkspace); //$NON-NLS-1$
+		logger.println("targetFolder: "+targetFolder);
+		
+		//logger.println("remoteProperties="+remoteProperties);
+		
+		logger.println("host="+host+", port="+port+", protocol="+protocol+", codePage="+codePage+", timeout="+timeout+", userId="+userId+", password="+password);
+		
+		StandardUsernamePasswordCredentials gitCredentials = globalConfig.getLoginInformation(build.getParent(),
+				gitCredentialsId);
+		String gitUserId = ArgumentUtils.escapeForScript(gitCredentials.getUsername());
+		String gitPassword = ArgumentUtils.escapeForScript(gitCredentials.getPassword().getPlainText());
+		
+		logger.println("gitRepoUrl="+gitRepoUrl+", gitUserId="+gitUserId+", gitPassword="+gitPassword);
+		
 		return true;
 	}
 	
