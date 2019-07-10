@@ -95,7 +95,7 @@ public class GitToIspwPublish extends Builder
 		String cliScriptFileRemote = new FilePath(vChannel, cliScriptFile).getRemote();
 		logger.println("cliScriptFileRemote: " + cliScriptFileRemote); //$NON-NLS-1$
 
-		ArgumentListBuilder args = new ArgumentListBuilder();
+		
 		
 		// server args
 		HostConnection connection = globalConfig.getHostConnection(connectionId);
@@ -123,6 +123,68 @@ public class GitToIspwPublish extends Builder
 		String gitPassword = ArgumentUtils.escapeForScript(gitCredentials.getPassword().getPlainText());
 		
 		logger.println("gitRepoUrl="+gitRepoUrl+", gitUserId="+gitUserId+", gitPassword="+gitPassword);
+		
+		ArgumentListBuilder args = new ArgumentListBuilder();
+		// build the list of arguments to pass to the CLI
+		
+		args.add(cliScriptFileRemote);
+		
+		// operation
+		args.add(Constants.ISPW_OPERATION_PARAM, "syncGitToIspw");
+		
+		// host connection
+		args.add(CommonConstants.HOST_PARM, host);
+		args.add(CommonConstants.PORT_PARM, port);
+		args.add(CommonConstants.USERID_PARM, userId);
+		args.add(CommonConstants.PW_PARM);
+		args.add(password, true);
+		
+		if(StringUtils.isNotBlank(protocol)) {
+			args.add(CommonConstants.PROTOCOL_PARM, protocol);
+		}
+		
+		args.add(CommonConstants.CODE_PAGE_PARM, codePage);
+		args.add(CommonConstants.TIMEOUT_PARM, timeout);
+		args.add(CommonConstants.TARGET_FOLDER_PARM, targetFolder);
+		args.add(CommonConstants.DATA_PARM, topazCliWorkspace);
+
+		if (StringUtils.isNotBlank(runtimeConfig))
+		{
+			runtimeConfig = ArgumentUtils.escapeForScript(runtimeConfig);
+			args.add(Constants.ISPW_SERVER_CONFIG_PARAM, runtimeConfig);
+		}
+
+		// ispw
+		args.add(Constants.ISPW_SERVER_STREAM_PARAM, stream);
+		args.add(Constants.ISPW_SERVER_APP_PARAM, app);
+		args.add(Constants.ISPW_SERVER_CHECKOUT_LEV_PARAM, "DEV1");
+
+		// git
+		args.add(Constants.GIT_USERID_PARAM, gitUserId);
+		args.add(Constants.GIT_PW_PARAM);
+		args.add(gitPassword, true);
+		args.add(Constants.GIT_REPO_URL_PARAM, gitRepoUrl);
+		args.add(Constants.GIT_REF_PARAM, ref);
+		args.add(Constants.GIT_HASH_PARAM, hash);
+		
+		// create the CLI workspace (in case it doesn't already exist)
+		EnvVars env = build.getEnvironment(listener);
+		FilePath workDir = new FilePath(vChannel, build.getWorkspace().getRemote());
+		workDir.mkdirs();
+
+		logger.println("Batch script: " + args.toString());
+		
+		// invoke the CLI (execute the batch/shell script)
+//		int exitValue = launcher.launch().cmds(args).envs(env).stdout(logger).pwd(workDir).join();
+//		if (exitValue != 0)
+//		{
+//			throw new AbortException("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
+//		}
+//		else
+//		{
+//			logger.println("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
+//			return true;
+//		}
 		
 		return true;
 	}
