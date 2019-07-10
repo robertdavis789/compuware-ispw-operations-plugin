@@ -6,6 +6,8 @@ package com.compuware.ispw.git;
 import java.io.IOException;
 import java.io.PrintStream;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -58,11 +60,16 @@ public class GitToIspwPublish extends Builder
 		PrintStream logger = listener.getLogger();
 
 		EnvVars envVars = build.getEnvironment(listener);
+		String hash = envVars.get("hash", "hash");
+		String ref = envVars.get("ref", "ref");
 
 		String buildTag = envVars.get("BUILD_TAG");
-		
-		logger.println("...getting buildTag=" + buildTag);
-		
+
+		logger.println("getting buildTag=" + buildTag);
+		String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+		logger.println("debugMsg=" + debugMsg);
+		logger.println("hash=" + hash + ", ref=" + ref);
+
 		return true;
 	}
 	
@@ -84,8 +91,9 @@ public class GitToIspwPublish extends Builder
 		public static final String branchMapping = "#The following messages are commented out to show how to use the 'Branch Mapping' field.\n"
 				+"#Click on the help button to the right of the screen for examples of how to populate this field\n"
 				+"#\n"
-				+"#*/dev1/ => DEV1\n"
-				+"#*/dev2/ => DEV2\n";
+				+"#*/dev1/ => DEV1, per-commit\n"
+				+"#*/dev2/ => DEV2, per-branch\n"
+				+"#*/dev3/ => DEV3, custom, description\n";
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;
 		
