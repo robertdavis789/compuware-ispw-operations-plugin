@@ -53,13 +53,4 @@
         <f:textarea default="${descriptor.branchMapping}"/>
     </f:entry>
 
-<!--
-    <f:entry field="containerPref" title="ISPW Container Preference" help="">
-        <f:select/>
-    </f:entry>
-
-    <f:entry field="containerDesc" title="ISPW Container Description Prefix" help="">
-        <f:textbox default="${descriptor.containerDesc}"/>
-    </f:entry>
--->
  </j:jelly>

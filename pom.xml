@@ -76,6 +76,7 @@
 		<workflow.version>1.10</workflow.version>
 		<maven.test.skip>false</maven.test.skip>
 		<enforcer.skip>true</enforcer.skip>
+		<ispwDebugMode>true</ispwDebugMode>
 	</properties>
 
 	<scm>

@@ -14,7 +14,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.compuware.ispw.restapi.Constants;
 import com.compuware.ispw.restapi.util.RestApiUtils;
 import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
 import com.compuware.jenkins.common.configuration.HostConnection;
@@ -58,8 +57,6 @@ public class GitToIspwPublish extends Builder
 
 	// Branch mapping
 	private String branchMapping = DescriptorImpl.branchMapping;
-	private String containerDesc = DescriptorImpl.containerDesc;
-	private String containerPref = DescriptorImpl.containerPref;
 	
 	@DataBoundConstructor
 	public GitToIspwPublish() {
@@ -73,13 +70,15 @@ public class GitToIspwPublish extends Builder
 		EnvVars envVars = build.getEnvironment(listener);
 		String hash = envVars.get("hash", "hash");
 		String ref = envVars.get("ref", "ref");
+		String refId = envVars.get("refId", "refId");
 
-		String buildTag = envVars.get("BUILD_TAG");
-
-		logger.println("getting buildTag=" + buildTag);
-		String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
-		logger.println("debugMsg=" + debugMsg);
-		logger.println("hash=" + hash + ", ref=" + ref);
+		if (RestApiUtils.isIspwDebugMode()) {
+			String buildTag = envVars.get("BUILD_TAG");
+			logger.println("getting buildTag=" + buildTag);
+			String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+			logger.println("debugMsg=" + debugMsg);
+			logger.println("hash=" + hash + ", ref=" + ref + ", refId=" + refId);
+		}
 
 		CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
 		
@@ -89,15 +88,13 @@ public class GitToIspwPublish extends Builder
 		assert vChannel!=null;
 		Properties remoteProperties = vChannel.call(new RemoteSystemProperties());
 		String remoteFileSeparator = remoteProperties.getProperty(CommonConstants.FILE_SEPARATOR_PROPERTY_KEY);
-		String osFile = launcher.isUnix() ? Constants.SCM_DOWNLOADER_CLI_SH : Constants.SCM_DOWNLOADER_CLI_BAT;
+		String osFile = launcher.isUnix() ? GitToIspwConstants.SCM_DOWNLOADER_CLI_SH : GitToIspwConstants.SCM_DOWNLOADER_CLI_BAT;
 
 		String cliScriptFile = globalConfig.getTopazCLILocation(launcher) + remoteFileSeparator + osFile;
 		logger.println("cliScriptFile: " + cliScriptFile); //$NON-NLS-1$
 		String cliScriptFileRemote = new FilePath(vChannel, cliScriptFile).getRemote();
 		logger.println("cliScriptFileRemote: " + cliScriptFileRemote); //$NON-NLS-1$
 
-		
-		
 		// server args
 		HostConnection connection = globalConfig.getHostConnection(connectionId);
 		String host = ArgumentUtils.escapeForScript(connection.getHost());
@@ -114,16 +111,18 @@ public class GitToIspwPublish extends Builder
 		logger.println("TopazCliWorkspace: " + topazCliWorkspace); //$NON-NLS-1$
 		logger.println("targetFolder: "+targetFolder);
 		
-		//logger.println("remoteProperties="+remoteProperties);
-		
-		logger.println("host="+host+", port="+port+", protocol="+protocol+", codePage="+codePage+", timeout="+timeout+", userId="+userId+", password="+password);
+		if(RestApiUtils.isIspwDebugMode()) {
+			logger.println("host="+host+", port="+port+", protocol="+protocol+", codePage="+codePage+", timeout="+timeout+", userId="+userId+", password="+password);
+		}
 		
 		StandardUsernamePasswordCredentials gitCredentials = globalConfig.getLoginInformation(build.getParent(),
 				gitCredentialsId);
 		String gitUserId = ArgumentUtils.escapeForScript(gitCredentials.getUsername());
 		String gitPassword = ArgumentUtils.escapeForScript(gitCredentials.getPassword().getPlainText());
 		
-		logger.println("gitRepoUrl="+gitRepoUrl+", gitUserId="+gitUserId+", gitPassword="+gitPassword);
+		if(RestApiUtils.isIspwDebugMode()) {
+			logger.println("gitRepoUrl="+gitRepoUrl+", gitUserId="+gitUserId+", gitPassword="+gitPassword);
+		}
 		
 		ArgumentListBuilder args = new ArgumentListBuilder();
 		// build the list of arguments to pass to the CLI
@@ -131,7 +130,7 @@ public class GitToIspwPublish extends Builder
 		args.add(cliScriptFileRemote);
 		
 		// operation
-		args.add(Constants.ISPW_OPERATION_PARAM, "syncGitToIspw");
+		args.add(GitToIspwConstants.ISPW_OPERATION_PARAM, "syncGitToIspw");
 		
 		// host connection
 		args.add(CommonConstants.HOST_PARM, host);
@@ -151,28 +150,28 @@ public class GitToIspwPublish extends Builder
 
 		if (StringUtils.isNotBlank(runtimeConfig))
 		{
-			args.add(Constants.ISPW_SERVER_CONFIG_PARAM, runtimeConfig);
+			args.add(GitToIspwConstants.ISPW_SERVER_CONFIG_PARAM, runtimeConfig);
 		}
 
 		// ispw
-		args.add(Constants.ISPW_SERVER_STREAM_PARAM, stream);
-		args.add(Constants.ISPW_SERVER_APP_PARAM, app);
-		args.add(Constants.ISPW_SERVER_CHECKOUT_LEV_PARAM, "DEV1");
+		args.add(GitToIspwConstants.ISPW_SERVER_STREAM_PARAM, stream);
+		args.add(GitToIspwConstants.ISPW_SERVER_APP_PARAM, app);
+		args.add(GitToIspwConstants.ISPW_SERVER_CHECKOUT_LEV_PARAM, "DEV1");
 
 		// git
-		args.add(Constants.GIT_USERID_PARAM, gitUserId);
-		args.add(Constants.GIT_PW_PARAM);
+		args.add(GitToIspwConstants.GIT_USERID_PARAM, gitUserId);
+		args.add(GitToIspwConstants.GIT_PW_PARAM);
 		args.add(gitPassword, true);
-		args.add(Constants.GIT_REPO_URL_PARAM, ArgumentUtils.escapeForScript(gitRepoUrl));
-		args.add(Constants.GIT_REF_PARAM, ref);
-		args.add(Constants.GIT_HASH_PARAM, hash);
+		args.add(GitToIspwConstants.GIT_REPO_URL_PARAM, ArgumentUtils.escapeForScript(gitRepoUrl));
+		args.add(GitToIspwConstants.GIT_REF_PARAM, ref);
+		args.add(GitToIspwConstants.GIT_HASH_PARAM, hash);
 		
 		// create the CLI workspace (in case it doesn't already exist)
 		EnvVars env = build.getEnvironment(listener);
 		FilePath workDir = new FilePath(vChannel, build.getWorkspace().getRemote());
 		workDir.mkdirs();
 
-		logger.println("Batch script: " + args.toString());
+		logger.println("Shell script: " + args.toString());
 		
 		// invoke the CLI (execute the batch/shell script)
 		int exitValue = launcher.launch().cmds(args).envs(env).stdout(logger).pwd(workDir).join();
@@ -208,7 +207,7 @@ public class GitToIspwPublish extends Builder
 				+"#\n"
 				+"#*/dev1/ => DEV1, per-commit\n"
 				+"#*/dev2/ => DEV2, per-branch\n"
-				+"#*/dev3/ => DEV3, custom, description\n";
+				+"#*/dev3/ => DEV3, custom, a description\n";
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;
 		
@@ -231,7 +230,7 @@ public class GitToIspwPublish extends Builder
 		// GIT
 		public ListBoxModel doFillGitCredentialsIdItems(@AncestorInPath Jenkins context, @QueryParameter String gitCredentialsId,
 				@AncestorInPath Item project) {
-			return RestApiUtils.buildStandardCredentialsIdItems(context, gitCredentialsId, project);
+			return GitToIspwUtils.buildStandardCredentialsIdItems(context, gitCredentialsId, project);
 		}
 		
 		// ISPW
@@ -243,13 +242,7 @@ public class GitToIspwPublish extends Builder
 		
 		public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Jenkins context, @QueryParameter String credentialsId,
 				@AncestorInPath Item project) {
-			return RestApiUtils.buildStandardCredentialsIdItems(context, credentialsId, project);
-		}
-
-		public ListBoxModel doFillContainerPrefItems(@AncestorInPath Jenkins context, @QueryParameter String containerPref,
-				@AncestorInPath Item project)
-		{
-			return RestApiUtils.buildContainerPrefItems(context, credentialsId, project);
+			return GitToIspwUtils.buildStandardCredentialsIdItems(context, credentialsId, project);
 		}
 		
 	}
@@ -392,40 +385,6 @@ public class GitToIspwPublish extends Builder
 	public void setBranchMapping(String branchMapping)
 	{
 		this.branchMapping = branchMapping;
-	}
-
-	/**
-	 * @return the containerDesc
-	 */
-	public String getContainerDesc()
-	{
-		return containerDesc;
-	}
-
-	/**
-	 * @param containerDesc the containerDesc to set
-	 */
-	@DataBoundSetter
-	public void setContainerDesc(String containerDesc)
-	{
-		this.containerDesc = containerDesc;
-	}
-
-	/**
-	 * @return the containerPref
-	 */
-	public String getContainerPref()
-	{
-		return containerPref;
-	}
-
-	/**
-	 * @param containerPref the containerPref to set
-	 */
-	@DataBoundSetter
-	public void setContainerPref(String containerPref)
-	{
-		this.containerPref = containerPref;
 	}
 	
 }

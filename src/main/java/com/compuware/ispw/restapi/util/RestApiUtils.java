@@ -20,7 +20,6 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.compuware.ces.model.BasicAuthentication;
 import com.compuware.ces.model.HttpHeader;
@@ -30,7 +29,7 @@ import com.compuware.ispw.restapi.JsonProcessor;
 import com.compuware.ispw.restapi.ResponseContentSupplier;
 import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
 import com.compuware.jenkins.common.configuration.HostConnection;
-import hudson.Util;
+
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
@@ -222,59 +221,6 @@ public class RestApiUtils {
 
 		return model;
 	}
-	
-	
-	public static ListBoxModel buildStandardCredentialsIdItems(@AncestorInPath Jenkins context, @QueryParameter String credentialsId,
-			@AncestorInPath Item project)
-	{
-		List<StandardUsernamePasswordCredentials> creds = CredentialsProvider.lookupCredentials(
-				StandardUsernamePasswordCredentials.class, project, ACL.SYSTEM,
-				Collections.<DomainRequirement> emptyList());
-
-		StandardListBoxModel model = new StandardListBoxModel();
-
-		model.add(new Option(StringUtils.EMPTY, StringUtils.EMPTY, false));
-
-		for (StandardUsernamePasswordCredentials c : creds)
-		{
-			boolean isSelected = false;
-
-			if (credentialsId != null)
-			{
-				isSelected = credentialsId.matches(c.getId());
-			}
-
-			String description = Util.fixEmptyAndTrim(c.getDescription());
-			model.add(new Option(c.getUsername() + (description != null ? " (" + description + ")" : StringUtils.EMPTY), //$NON-NLS-1$ //$NON-NLS-2$
-					c.getId(), isSelected));
-		}
-
-		return model;
-	}
-	
-	public static ListBoxModel buildContainerPrefItems(@AncestorInPath Jenkins context, @QueryParameter String containerPref,
-			@AncestorInPath Item project)
-	{
-		ListBoxModel model = new ListBoxModel();
-
-		/*
-		if (Constants.CONTAINER_PREF_REUSE.equals(containerPref))
-		{
-			model.add(new Option(Constants.CONTAINER_PRE_NEW, Constants.CONTAINER_PRE_NEW, false));
-			model.add(new Option(Constants.CONTAINER_PREF_REUSE, Constants.CONTAINER_PREF_REUSE, true));
-		}
-		else
-		{
-			model.add(new Option(Constants.CONTAINER_PRE_NEW, Constants.CONTAINER_PRE_NEW, true));
-			model.add(new Option(Constants.CONTAINER_PREF_REUSE, Constants.CONTAINER_PREF_REUSE, false));
-		}
-		*/
-		model.add(new Option(Constants.CONTAINER_PRE_NEW, Constants.CONTAINER_PRE_NEW));
-		model.add(new Option(Constants.CONTAINER_PREF_REUSE, Constants.CONTAINER_PREF_REUSE));
-		
-		return model;
-	}
-	
 	
 	public static ListBoxModel buildIspwActionItems(
 			@AncestorInPath Jenkins context, @QueryParameter String ispwAction,
