@@ -57,14 +57,16 @@ public class GitToIspwPublish extends Builder
 
 	// Branch mapping
 	private String branchMapping = DescriptorImpl.branchMapping;
-	
+
 	@DataBoundConstructor
-	public GitToIspwPublish() {
+	public GitToIspwPublish()
+	{
 	}
-	
+
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-			throws InterruptedException, IOException {
+			throws InterruptedException, IOException
+	{
 		PrintStream logger = listener.getLogger();
 
 		EnvVars envVars = build.getEnvironment(listener);
@@ -72,7 +74,8 @@ public class GitToIspwPublish extends Builder
 		String ref = envVars.get("ref", "ref");
 		String refId = envVars.get("refId", "refId");
 
-		if (RestApiUtils.isIspwDebugMode()) {
+		if (RestApiUtils.isIspwDebugMode())
+		{
 			String buildTag = envVars.get("BUILD_TAG");
 			logger.println("getting buildTag=" + buildTag);
 			String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
@@ -81,14 +84,16 @@ public class GitToIspwPublish extends Builder
 		}
 
 		CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
-		
-		assert launcher!=null;
+
+		assert launcher != null;
 		VirtualChannel vChannel = launcher.getChannel();
-		
-		assert vChannel!=null;
+
+		assert vChannel != null;
 		Properties remoteProperties = vChannel.call(new RemoteSystemProperties());
 		String remoteFileSeparator = remoteProperties.getProperty(CommonConstants.FILE_SEPARATOR_PROPERTY_KEY);
-		String osFile = launcher.isUnix() ? GitToIspwConstants.SCM_DOWNLOADER_CLI_SH : GitToIspwConstants.SCM_DOWNLOADER_CLI_BAT;
+		String osFile = launcher.isUnix()
+				? GitToIspwConstants.SCM_DOWNLOADER_CLI_SH
+				: GitToIspwConstants.SCM_DOWNLOADER_CLI_BAT;
 
 		String cliScriptFile = globalConfig.getTopazCLILocation(launcher) + remoteFileSeparator + osFile;
 		logger.println("cliScriptFile: " + cliScriptFile); //$NON-NLS-1$
@@ -102,47 +107,50 @@ public class GitToIspwPublish extends Builder
 		String protocol = connection.getProtocol();
 		String codePage = connection.getCodePage();
 		String timeout = ArgumentUtils.escapeForScript(connection.getTimeout());
-		StandardUsernamePasswordCredentials credentials = globalConfig.getLoginInformation(build.getParent(),
-				credentialsId);
+		StandardUsernamePasswordCredentials credentials = globalConfig.getLoginInformation(build.getParent(), credentialsId);
 		String userId = ArgumentUtils.escapeForScript(credentials.getUsername());
 		String password = ArgumentUtils.escapeForScript(credentials.getPassword().getPlainText());
 		String targetFolder = ArgumentUtils.escapeForScript(build.getWorkspace().getRemote());
 		String topazCliWorkspace = build.getWorkspace().getRemote() + remoteFileSeparator + CommonConstants.TOPAZ_CLI_WORKSPACE;
 		logger.println("TopazCliWorkspace: " + topazCliWorkspace); //$NON-NLS-1$
-		logger.println("targetFolder: "+targetFolder);
-		
-		if(RestApiUtils.isIspwDebugMode()) {
-			logger.println("host="+host+", port="+port+", protocol="+protocol+", codePage="+codePage+", timeout="+timeout+", userId="+userId+", password="+password);
+		logger.println("targetFolder: " + targetFolder);
+
+		if (RestApiUtils.isIspwDebugMode())
+		{
+			logger.println("host=" + host + ", port=" + port + ", protocol=" + protocol + ", codePage=" + codePage
+					+ ", timeout=" + timeout + ", userId=" + userId + ", password=" + password);
 		}
-		
+
 		StandardUsernamePasswordCredentials gitCredentials = globalConfig.getLoginInformation(build.getParent(),
 				gitCredentialsId);
 		String gitUserId = ArgumentUtils.escapeForScript(gitCredentials.getUsername());
 		String gitPassword = ArgumentUtils.escapeForScript(gitCredentials.getPassword().getPlainText());
-		
-		if(RestApiUtils.isIspwDebugMode()) {
-			logger.println("gitRepoUrl="+gitRepoUrl+", gitUserId="+gitUserId+", gitPassword="+gitPassword);
+
+		if (RestApiUtils.isIspwDebugMode())
+		{
+			logger.println("gitRepoUrl=" + gitRepoUrl + ", gitUserId=" + gitUserId + ", gitPassword=" + gitPassword);
 		}
-		
+
 		ArgumentListBuilder args = new ArgumentListBuilder();
 		// build the list of arguments to pass to the CLI
-		
+
 		args.add(cliScriptFileRemote);
-		
+
 		// operation
 		args.add(GitToIspwConstants.ISPW_OPERATION_PARAM, "syncGitToIspw");
-		
+
 		// host connection
 		args.add(CommonConstants.HOST_PARM, host);
 		args.add(CommonConstants.PORT_PARM, port);
 		args.add(CommonConstants.USERID_PARM, userId);
 		args.add(CommonConstants.PW_PARM);
 		args.add(password, true);
-		
-		if(StringUtils.isNotBlank(protocol)) {
+
+		if (StringUtils.isNotBlank(protocol))
+		{
 			args.add(CommonConstants.PROTOCOL_PARM, protocol);
 		}
-		
+
 		args.add(CommonConstants.CODE_PAGE_PARM, codePage);
 		args.add(CommonConstants.TIMEOUT_PARM, timeout);
 		args.add(CommonConstants.TARGET_FOLDER_PARM, targetFolder);
@@ -165,14 +173,14 @@ public class GitToIspwPublish extends Builder
 		args.add(GitToIspwConstants.GIT_REPO_URL_PARAM, ArgumentUtils.escapeForScript(gitRepoUrl));
 		args.add(GitToIspwConstants.GIT_REF_PARAM, ref);
 		args.add(GitToIspwConstants.GIT_HASH_PARAM, hash);
-		
+
 		// create the CLI workspace (in case it doesn't already exist)
 		EnvVars env = build.getEnvironment(listener);
 		FilePath workDir = new FilePath(vChannel, build.getWorkspace().getRemote());
 		workDir.mkdirs();
 
 		logger.println("Shell script: " + args.toString());
-		
+
 		// invoke the CLI (execute the batch/shell script)
 		int exitValue = launcher.launch().cmds(args).envs(env).stdout(logger).pwd(workDir).join();
 		if (exitValue != 0)
@@ -186,10 +194,11 @@ public class GitToIspwPublish extends Builder
 		}
 
 	}
-	
+
 	@Extension
-	public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-		
+	public static final class DescriptorImpl extends BuildStepDescriptor<Builder>
+	{
+
 		// GIT related
 		public static final String gitRepoUrl = StringUtils.EMPTY;
 		public static final String gitCredentialsId = StringUtils.EMPTY;
@@ -200,57 +209,60 @@ public class GitToIspwPublish extends Builder
 		public static final String runtimeConfig = StringUtils.EMPTY;
 		public static final String stream = StringUtils.EMPTY;
 		public static final String app = StringUtils.EMPTY;
-		
+
 		// Branch mapping
 		public static final String branchMapping = "#The following messages are commented out to show how to use the 'Branch Mapping' field.\n"
-				+"#Click on the help button to the right of the screen for examples of how to populate this field\n"
-				+"#\n"
-				+"#*/dev1/ => DEV1, per-commit\n"
-				+"#*/dev2/ => DEV2, per-branch\n"
-				+"#*/dev3/ => DEV3, custom, a description\n";
+				+ "#Click on the help button to the right of the screen for examples of how to populate this field\n" + "#\n"
+				+ "#*/dev1/ => DEV1, per-commit\n" + "#*/dev2/ => DEV2, per-branch\n"
+				+ "#*/dev3/ => DEV3, custom, a description\n";
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;
-		
-		public DescriptorImpl() {
+
+		public DescriptorImpl()
+		{
 			load();
 		}
 
 		@Override
-		public String getDisplayName() {
+		public String getDisplayName()
+		{
 			return "GIT to ISPW Integration";
 		}
-		
+
 		@SuppressWarnings("rawtypes")
 		@Override
 		public boolean isApplicable(Class<? extends AbstractProject> aClass)
 		{
 			return true;
 		}
-		
+
 		// GIT
-		public ListBoxModel doFillGitCredentialsIdItems(@AncestorInPath Jenkins context, @QueryParameter String gitCredentialsId,
-				@AncestorInPath Item project) {
+		public ListBoxModel doFillGitCredentialsIdItems(@AncestorInPath Jenkins context,
+				@QueryParameter String gitCredentialsId, @AncestorInPath Item project)
+		{
 			return GitToIspwUtils.buildStandardCredentialsIdItems(context, gitCredentialsId, project);
 		}
-		
+
 		// ISPW
 		public ListBoxModel doFillConnectionIdItems(@AncestorInPath Jenkins context, @QueryParameter String connectionId,
 				@AncestorInPath Item project)
 		{
-			return RestApiUtils.buildConnectionIdItems(context,  connectionId, project);
+			return RestApiUtils.buildConnectionIdItems(context, connectionId, project);
 		}
-		
+
 		public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Jenkins context, @QueryParameter String credentialsId,
-				@AncestorInPath Item project) {
+				@AncestorInPath Item project)
+		{
 			return GitToIspwUtils.buildStandardCredentialsIdItems(context, credentialsId, project);
 		}
-		
+
 	}
 
 	@Initializer(before = InitMilestone.PLUGINS_STARTED)
-	public static void xStreamCompatibility() {
+	public static void xStreamCompatibility()
+	{
 	}
-	
+
 	/**
 	 * @return the gitRepoUrl
 	 */
@@ -260,7 +272,8 @@ public class GitToIspwPublish extends Builder
 	}
 
 	/**
-	 * @param gitRepoUrl the gitRepoUrl to set
+	 * @param gitRepoUrl
+	 *            the gitRepoUrl to set
 	 */
 	@DataBoundSetter
 	public void setGitRepoUrl(String gitRepoUrl)
@@ -277,7 +290,8 @@ public class GitToIspwPublish extends Builder
 	}
 
 	/**
-	 * @param gitCredentialsId the gitCredentialsId to set
+	 * @param gitCredentialsId
+	 *            the gitCredentialsId to set
 	 */
 	@DataBoundSetter
 	public void setGitCredentialsId(String gitCredentialsId)
@@ -294,7 +308,8 @@ public class GitToIspwPublish extends Builder
 	}
 
 	/**
-	 * @param connectionId the connectionId to set
+	 * @param connectionId
+	 *            the connectionId to set
 	 */
 	@DataBoundSetter
 	public void setConnectionId(String connectionId)
@@ -311,7 +326,8 @@ public class GitToIspwPublish extends Builder
 	}
 
 	/**
-	 * @param credentialsId the credentialsId to set
+	 * @param credentialsId
+	 *            the credentialsId to set
 	 */
 	@DataBoundSetter
 	public void setCredentialsId(String credentialsId)
@@ -328,7 +344,8 @@ public class GitToIspwPublish extends Builder
 	}
 
 	/**
-	 * @param runtimeConfig the runtimeConfig to set
+	 * @param runtimeConfig
+	 *            the runtimeConfig to set
 	 */
 	@DataBoundSetter
 	public void setRuntimeConfig(String runtimeConfig)
@@ -345,7 +362,8 @@ public class GitToIspwPublish extends Builder
 	}
 
 	/**
-	 * @param stream the stream to set
+	 * @param stream
+	 *            the stream to set
 	 */
 	@DataBoundSetter
 	public void setStream(String stream)
@@ -362,7 +380,8 @@ public class GitToIspwPublish extends Builder
 	}
 
 	/**
-	 * @param app the app to set
+	 * @param app
+	 *            the app to set
 	 */
 	@DataBoundSetter
 	public void setApp(String app)
@@ -379,12 +398,13 @@ public class GitToIspwPublish extends Builder
 	}
 
 	/**
-	 * @param branchMapping the branchMapping to set
+	 * @param branchMapping
+	 *            the branchMapping to set
 	 */
 	@DataBoundSetter
 	public void setBranchMapping(String branchMapping)
 	{
 		this.branchMapping = branchMapping;
 	}
-	
+
 }

@@ -19,12 +19,11 @@ import jenkins.model.Jenkins;
 public class GitToIspwUtils
 {
 
-	public static ListBoxModel buildStandardCredentialsIdItems(@AncestorInPath Jenkins context, @QueryParameter String credentialsId,
-			@AncestorInPath Item project)
+	public static ListBoxModel buildStandardCredentialsIdItems(@AncestorInPath Jenkins context,
+			@QueryParameter String credentialsId, @AncestorInPath Item project)
 	{
 		List<StandardUsernamePasswordCredentials> creds = CredentialsProvider.lookupCredentials(
-				StandardUsernamePasswordCredentials.class, project, ACL.SYSTEM,
-				Collections.<DomainRequirement> emptyList());
+				StandardUsernamePasswordCredentials.class, project, ACL.SYSTEM, Collections.<DomainRequirement> emptyList());
 
 		StandardListBoxModel model = new StandardListBoxModel();
 
@@ -46,7 +45,7 @@ public class GitToIspwUtils
 
 		return model;
 	}
-	
+
 	public static ListBoxModel buildContainerPrefItems(@AncestorInPath Jenkins context, @QueryParameter String containerPref,
 			@AncestorInPath Item project)
 	{
@@ -55,7 +54,7 @@ public class GitToIspwUtils
 		model.add(new Option(GitToIspwConstants.CONTAINER_PREF_PER_COMMIT, GitToIspwConstants.CONTAINER_PREF_PER_COMMIT));
 		model.add(new Option(GitToIspwConstants.CONTAINER_PREF_PER_BRANCH, GitToIspwConstants.CONTAINER_PREF_PER_BRANCH));
 		model.add(new Option(GitToIspwConstants.CONTAINER_PREF_CUSTOM, GitToIspwConstants.CONTAINER_PREF_CUSTOM));
-		
+
 		return model;
 	}
 }
