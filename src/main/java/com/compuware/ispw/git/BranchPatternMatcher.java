@@ -16,8 +16,7 @@ import org.apache.commons.lang.StringUtils;
  */
 public class BranchPatternMatcher
 {
-	private String defaultLevel = StringUtils.EMPTY;
-	private Map<Pattern, String> patternToLevel = new HashMap<Pattern, String>();
+	private Map<Pattern, RefMap> patternMapping = new HashMap<Pattern, RefMap>();
 
 	/**
 	 * Constructor
@@ -27,13 +26,13 @@ public class BranchPatternMatcher
 	 * @param ispwDao
 	 *            the ISPW DAO instance
 	 */
-	public BranchPatternMatcher(Map<String, String> branchPatternToIspwLevel, PrintStream log)
+	public BranchPatternMatcher(Map<String, RefMap> branchPatternToIspwLevel, PrintStream log)
 	{
 		if (branchPatternToIspwLevel != null)
 		{
 			branchPatternToIspwLevel.entrySet().stream().forEach(entry -> {
 				String branchPattern = entry.getKey();
-				String ispwLevel = entry.getValue();
+				RefMap refMap = entry.getValue();
 				String regex = StringUtils.EMPTY;
 
 				try
@@ -41,7 +40,7 @@ public class BranchPatternMatcher
 					regex = BranchPatternMatcher.wildcardToRegex(branchPattern);
 					Pattern compiled = Pattern.compile(regex);
 
-					patternToLevel.put(compiled, ispwLevel);
+					patternMapping.put(compiled, refMap);
 				}
 				catch (PatternSyntaxException x)
 				{
@@ -60,18 +59,18 @@ public class BranchPatternMatcher
 	 *            the ref ID
 	 * @return the ISPW level matched
 	 */
-	public String match(String refId)
+	public RefMap match(String refId)
 	{
-		Optional<Pattern> optional = patternToLevel.keySet().stream().filter(x -> x.matcher(refId).find()).findFirst();
+		Optional<Pattern> optional = patternMapping.keySet().stream().filter(x -> x.matcher(refId).find()).findFirst();
 
 		if (optional.isPresent())
 		{
 			Pattern pattern = optional.get();
-			return StringUtils.trimToEmpty(patternToLevel.get(pattern));
+			return patternMapping.get(pattern);
 		}
 		else
 		{
-			return StringUtils.trimToEmpty(defaultLevel);
+			return null;
 		}
 	}
 

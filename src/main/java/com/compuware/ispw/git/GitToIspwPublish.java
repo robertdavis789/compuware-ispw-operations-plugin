@@ -5,6 +5,7 @@ package com.compuware.ispw.git;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Map;
 import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -43,7 +44,6 @@ import jenkins.model.Jenkins;
  */
 public class GitToIspwPublish extends Builder
 {
-
 	// GIT related
 	private String gitRepoUrl = DescriptorImpl.gitRepoUrl;
 	private String gitCredentialsId = DescriptorImpl.gitCredentialsId;
@@ -70,17 +70,47 @@ public class GitToIspwPublish extends Builder
 		PrintStream logger = listener.getLogger();
 
 		EnvVars envVars = build.getEnvironment(listener);
-		String hash = envVars.get("hash", "hash");
-		String ref = envVars.get("ref", "ref");
-		String refId = envVars.get("refId", "refId");
+		String hash = envVars.get(GitToIspwConstants.VAR_HASH, GitToIspwConstants.VAR_HASH);
+		String ref = envVars.get(GitToIspwConstants.VAR_REF, GitToIspwConstants.VAR_REF);
+		String refId = envVars.get(GitToIspwConstants.VAR_REF_ID, GitToIspwConstants.VAR_REF_ID);
 
+		if (hash.equals(GitToIspwConstants.VAR_HASH) || ref.equals(GitToIspwConstants.VAR_REF)
+				|| refId.equals(GitToIspwConstants.VAR_REF_ID))
+		{
+			logger.println("hash, ref, refId must be presented in order for the build to work");
+			return false;
+		}
+		else
+		{
+			logger.println("hash=" + hash + ", ref=" + ref + ", refId=" + refId);
+		}
+		
+		Map<String, RefMap> map = GitToIspwUtils.parse(branchMapping);
+		logger.println("map="+map);
+		
+		BranchPatternMatcher matcher = new BranchPatternMatcher(map, logger);
+		RefMap refMap = matcher.match(refId);
+		
+		if (refMap == null)
+		{
+			logger.println("branch mapping is not defined for refId: " + refId);
+			return false;
+		}
+		else
+		{
+			logger.println("mapping refId: " + refId + " to refMap=" + refMap.toString());
+		}
+		
+		String ispwLevel = refMap.getIspwLevel();
+		String containerPref = refMap.getContainerPref();
+		
 		if (RestApiUtils.isIspwDebugMode())
 		{
 			String buildTag = envVars.get("BUILD_TAG");
 			logger.println("getting buildTag=" + buildTag);
+			
 			String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
 			logger.println("debugMsg=" + debugMsg);
-			logger.println("hash=" + hash + ", ref=" + ref + ", refId=" + refId);
 		}
 
 		CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
@@ -164,7 +194,7 @@ public class GitToIspwPublish extends Builder
 		// ispw
 		args.add(GitToIspwConstants.ISPW_SERVER_STREAM_PARAM, stream);
 		args.add(GitToIspwConstants.ISPW_SERVER_APP_PARAM, app);
-		args.add(GitToIspwConstants.ISPW_SERVER_CHECKOUT_LEV_PARAM, "DEV1");
+		args.add(GitToIspwConstants.ISPW_SERVER_CHECKOUT_LEV_PARAM, ispwLevel);
 
 		// git
 		args.add(GitToIspwConstants.GIT_USERID_PARAM, gitUserId);

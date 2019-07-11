@@ -1,7 +1,10 @@
 package com.compuware.ispw.git;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
@@ -56,5 +59,46 @@ public class GitToIspwUtils
 		model.add(new Option(GitToIspwConstants.CONTAINER_PREF_CUSTOM, GitToIspwConstants.CONTAINER_PREF_CUSTOM));
 
 		return model;
+	}
+
+	public static Map<String, RefMap> parse(String branchMapping)
+	{
+		Map<String, RefMap> map = new HashMap<String, RefMap>();
+
+		String[] lines = branchMapping.split("\n");
+		for (String line : lines)
+		{
+			line = StringUtils.trimToEmpty(line);
+
+			if (line.startsWith("#"))
+			{
+				continue;
+			}
+
+			int indexOfArrow = line.indexOf("=>");
+			if (indexOfArrow != -1)
+			{
+				String pattern = StringUtils.trimToEmpty(line.substring(0, indexOfArrow));
+				String ispwLevel = StringUtils.EMPTY;
+				String containerPref = GitToIspwConstants.CONTAINER_PREF_PER_COMMIT;
+
+				String rest = line.substring(indexOfArrow + 2);
+				StringTokenizer tokenizer = new StringTokenizer(rest, ",");
+				if (tokenizer.hasMoreTokens())
+				{
+					ispwLevel = StringUtils.trimToEmpty(tokenizer.nextToken());
+				}
+
+				if (tokenizer.hasMoreElements())
+				{
+					containerPref = StringUtils.trimToEmpty(tokenizer.nextToken());
+				}
+
+				RefMap refMap = new RefMap(ispwLevel, containerPref);
+				map.put(pattern, refMap);
+			}
+		}
+
+		return map;
 	}
 }

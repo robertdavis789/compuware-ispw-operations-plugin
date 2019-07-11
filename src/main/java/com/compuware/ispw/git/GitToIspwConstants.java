@@ -2,6 +2,10 @@ package com.compuware.ispw.git;
 
 public class GitToIspwConstants
 {
+	public static String VAR_REF_ID = "refId";
+	public static String VAR_REF = "ref";
+	public static String VAR_HASH = "hash";
+	
 	public static String CONTAINER_PREF_PER_COMMIT = "per-commit";
 	public static String CONTAINER_PREF_PER_BRANCH = "per-branch";
 	public static String CONTAINER_PREF_CUSTOM = "custom";
