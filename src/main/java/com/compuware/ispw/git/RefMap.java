@@ -14,10 +14,11 @@ public class RefMap
 		this.ispwLevel = ispwLevel;
 	}
 
-	public String toString() {
+	public String toString()
+	{
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
 	}
-	
+
 	/**
 	 * @return the containerPref
 	 */
@@ -27,7 +28,8 @@ public class RefMap
 	}
 
 	/**
-	 * @param containerPref the containerPref to set
+	 * @param containerPref
+	 *            the containerPref to set
 	 */
 	public void setContainerPref(String containerPref)
 	{
@@ -43,7 +45,8 @@ public class RefMap
 	}
 
 	/**
-	 * @param ispwLevel the ispwLevel to set
+	 * @param ispwLevel
+	 *            the ispwLevel to set
 	 */
 	public void setIspwLevel(String ispwLevel)
 	{

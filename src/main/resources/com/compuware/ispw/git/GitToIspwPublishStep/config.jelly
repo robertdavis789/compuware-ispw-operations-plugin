@@ -1,56 +1,65 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:cc="/lib/compuware">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form"
+	xmlns:c="/lib/credentials" xmlns:cc="/lib/compuware">
 
 	<f:block>
-		<h4 style="margin-bottom:0px">GIT</h4>
-	</f:block>
-	
-    <f:entry field="gitRepoUrl" title="Repository URL" help="/plugin/compuware-ispw-operations/help-gitRepoUrl.html">
-        <f:textbox default="${descriptor.gitRepoUrl}"/>
-    </f:entry>
-
-	<f:entry title="Credentials" field="gitCredentialsId" help="/plugin/compuware-ispw-operations/help-gitCredentialsId.html">
-		<c:select/>
-	</f:entry>
-
-	<f:block>
-		<hr size="1" color="Gainsboro"/>
+		<h4 style="margin-bottom: 0px">Git</h4>
 	</f:block>
 
-	<f:block>
-		<h4 style="margin-bottom:0px">ISPW</h4>
-	</f:block>
-
-	<f:entry title="Host connection" field="connectionId" help="/plugin/compuware-ispw-operations/help-gitIspwConnectionId.html">
-    	<cc:hostSelect default=""/>
+	<f:entry field="gitRepoUrl" title="Repository URL"
+		help="/plugin/compuware-ispw-operations/help-gitRepoUrl.html">
+		<f:textbox default="${descriptor.gitRepoUrl}" />
 	</f:entry>
 
-	<f:entry title="Runtime Configuration" field="runtimeConfig" help="/plugin/compuware-ispw-operations/help-gitIspwRuntimeConfig.html">
-		<f:textbox default="${descriptor.runtimeConfig}"/>
-	</f:entry>
-
-	<f:entry title="Credentials" field="credentialsId" help="/plugin/compuware-ispw-operations/help-gitIspwCredentialsId.html">
-		<c:select/>
-	</f:entry>
-    
-	<f:entry title="Stream" field="stream" help="/plugin/compuware-ispw-operations/help-gitIspwStream.html">
-		<f:textbox default="${descriptor.stream}"/>
-	</f:entry>
-
-	<f:entry title="Application" field="app" help="/plugin/compuware-ispw-operations/help-gitIspwApplication.html">
-		<f:textbox default="${descriptor.app}"/>
+	<f:entry title="Credentials" field="gitCredentialsId"
+		help="/plugin/compuware-ispw-operations/help-gitCredentialsId.html">
+		<c:select />
 	</f:entry>
 
 	<f:block>
-		<hr size="1" color="Gainsboro"/>
+		<hr size="1" color="Gainsboro" />
 	</f:block>
 
 	<f:block>
-		<h4 style="margin-bottom:0px">GIT to ISPW Branch Mapping</h4>
+		<h4 style="margin-bottom: 0px">ISPW</h4>
 	</f:block>
 
-    <f:entry field="branchMapping" title="Branch Mapping" help="/plugin/compuware-ispw-operations/help-gitIspwBranchMapping.html">
-        <f:textarea default="${descriptor.branchMapping}"/>
-    </f:entry>
+	<f:entry title="Host connection" field="connectionId"
+		help="/plugin/compuware-ispw-operations/help-gitIspwConnectionId.html">
+		<cc:hostSelect default="" />
+	</f:entry>
 
- </j:jelly>
+	<f:entry title="Runtime Configuration" field="runtimeConfig"
+		help="/plugin/compuware-ispw-operations/help-gitIspwRuntimeConfig.html">
+		<f:textbox default="${descriptor.runtimeConfig}" />
+	</f:entry>
+
+	<f:entry title="Credentials" field="credentialsId"
+		help="/plugin/compuware-ispw-operations/help-gitIspwCredentialsId.html">
+		<c:select />
+	</f:entry>
+
+	<f:entry title="Stream" field="stream"
+		help="/plugin/compuware-ispw-operations/help-gitIspwStream.html">
+		<f:textbox default="${descriptor.stream}" />
+	</f:entry>
+
+	<f:entry title="Application" field="app"
+		help="/plugin/compuware-ispw-operations/help-gitIspwApplication.html">
+		<f:textbox default="${descriptor.app}" />
+	</f:entry>
+
+	<f:block>
+		<hr size="1" color="Gainsboro" />
+	</f:block>
+
+	<f:block>
+		<h4 style="margin-bottom: 0px">Git to ISPW Branch Mapping</h4>
+	</f:block>
+
+	<f:entry field="branchMapping" title="Branch Mapping"
+		help="/plugin/compuware-ispw-operations/help-gitIspwBranchMapping.html">
+		<f:textarea default="${descriptor.branchMapping}" />
+	</f:entry>
+
+</j:jelly>

@@ -66,19 +66,21 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 	{
 	}
 
-    public static final class Execution extends AbstractSynchronousNonBlockingStepExecution<Integer> {
+	public static final class Execution extends AbstractSynchronousNonBlockingStepExecution<Integer>
+	{
 
-        @Inject
-        private transient GitToIspwPublishStep step;
+		@Inject
+		private transient GitToIspwPublishStep step;
 
 		@StepContextParameter
 		private transient Run<?, ?> run;
 		@StepContextParameter
 		private transient TaskListener listener;
-		
+
 		@Override
-		protected Integer run() throws Exception {
-			
+		protected Integer run() throws Exception
+		{
+
 			PrintStream logger = listener.getLogger();
 
 			EnvVars envVars = getContext().get(hudson.EnvVars.class);
@@ -97,13 +99,13 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 			{
 				logger.println("hash=" + hash + ", ref=" + ref + ", refId=" + refId);
 			}
-			
+
 			Map<String, RefMap> map = GitToIspwUtils.parse(step.branchMapping);
-			logger.println("map="+map);
-			
+			logger.println("map=" + map);
+
 			BranchPatternMatcher matcher = new BranchPatternMatcher(map, logger);
 			RefMap refMap = matcher.match(refId);
-			
+
 			if (refMap == null)
 			{
 				logger.println("branch mapping is not defined for refId: " + refId);
@@ -113,15 +115,15 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 			{
 				logger.println("mapping refId: " + refId + " to refMap=" + refMap.toString());
 			}
-			
+
 			String ispwLevel = refMap.getIspwLevel();
 			String containerPref = refMap.getContainerPref();
-			
+
 			if (RestApiUtils.isIspwDebugMode())
 			{
 				String buildTag = envVars.get("BUILD_TAG");
 				logger.println("getting buildTag=" + buildTag);
-				
+
 				String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
 				logger.println("debugMsg=" + debugMsg);
 			}
@@ -151,7 +153,8 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 			String protocol = connection.getProtocol();
 			String codePage = connection.getCodePage();
 			String timeout = ArgumentUtils.escapeForScript(connection.getTimeout());
-			StandardUsernamePasswordCredentials credentials = globalConfig.getLoginInformation(run.getParent(), step.credentialsId);
+			StandardUsernamePasswordCredentials credentials = globalConfig.getLoginInformation(run.getParent(),
+					step.credentialsId);
 			String userId = ArgumentUtils.escapeForScript(credentials.getUsername());
 			String password = ArgumentUtils.escapeForScript(credentials.getPassword().getPlainText());
 			String targetFolder = ArgumentUtils.escapeForScript(run.getRootDir().toString());
@@ -238,7 +241,7 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 			}
 
 		}
-    }
+	}
 
 	@Extension
 	public static final class DescriptorImpl extends AbstractStepDescriptorImpl
@@ -256,8 +259,8 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 		public static final String app = StringUtils.EMPTY;
 
 		// Branch mapping
-		public static final String branchMapping = "#The following messages are commented out to show how to use the 'Branch Mapping' field.\n"
-				+ "#Click on the help button to the right of the screen for examples of how to populate this field\n" + "#\n"
+		public static final String branchMapping = "#The following comments show how to use the 'Branch Mapping' field.\n"
+				+ "#Click on the help button to the right of the screen for more details on how to populate this field\n" + "#\n"
 				+ "#*/dev1/ => DEV1, per-commit\n" + "#*/dev2/ => DEV2, per-branch\n"
 				+ "#*/dev3/ => DEV3, custom, a description\n";
 		public static final String containerDesc = StringUtils.EMPTY;
@@ -265,17 +268,18 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 
 		public DescriptorImpl()
 		{
-	           super(Execution.class);
+			super(Execution.class);
 		}
 
 		@Override
 		public String getDisplayName()
 		{
-			return "GIT to ISPW Integration";
+			return "Git to ISPW Integration";
 		}
 
 		@Override
-		public String getFunctionName() {
+		public String getFunctionName()
+		{
 			return "gitToIspwItegration";
 		}
 

@@ -1,8 +1,25 @@
 <div>
-<ul>
- <li>The 1st field is GIT to ISPW branch mapping, support wild card, for example, **/dev1 => DEV1, **/dev2 => DEV2 etc.
- <li>The 2nd field can be per-commit (container will be created for each commit), per-branch (container will be re-used
- per branch commit) or custom (user can specify a container name as description, user must specify 3rd field).
- <li>The 3rd field need to be specified as container description only if user choose 'custom' in the 2nd field.
-</ul>
+	This area is used to define the branch mappings of Git branches to ISPW
+	levels. Each mapping has three possible fields which should be
+	separated by commas.
+	<ol>
+		<li>The first field is a Git branch to ISPW level mapping which
+			supports wildcarding (example: **/dev1 => DEV1, **/dev2 => DEV2,
+			etc.)
+		<li>The second field indicates how often to create an assignment
+			to load the changes in ISPW. <br>The possible values are
+			<ul>
+				<li>per-commit: an assignment will be created for each commit.</li>
+				<li>per-branch: an assignment will be created for each Git
+					branch. If an assignment already exists for a Git branch, it will
+					be reused.</li>
+				<li>custom: an assignment with the given custom description
+					will be created for this branch mapping. If an assignment with this
+					description already exists, it will be reused. When "custom" is
+					specified, the user must specify the third field.</li>
+			</ul>
+		<li>The third field indicates the custom assignment description
+			to use when loading changes into an assignment. <br>This field
+			is only required if "custom" was specified in the second field.
+	</ol>
 </div>

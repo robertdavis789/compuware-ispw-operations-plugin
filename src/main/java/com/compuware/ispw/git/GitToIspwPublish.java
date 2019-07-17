@@ -84,13 +84,13 @@ public class GitToIspwPublish extends Builder
 		{
 			logger.println("hash=" + hash + ", ref=" + ref + ", refId=" + refId);
 		}
-		
+
 		Map<String, RefMap> map = GitToIspwUtils.parse(branchMapping);
-		logger.println("map="+map);
-		
+		logger.println("map=" + map);
+
 		BranchPatternMatcher matcher = new BranchPatternMatcher(map, logger);
 		RefMap refMap = matcher.match(refId);
-		
+
 		if (refMap == null)
 		{
 			logger.println("branch mapping is not defined for refId: " + refId);
@@ -100,15 +100,15 @@ public class GitToIspwPublish extends Builder
 		{
 			logger.println("mapping refId: " + refId + " to refMap=" + refMap.toString());
 		}
-		
+
 		String ispwLevel = refMap.getIspwLevel();
 		String containerPref = refMap.getContainerPref();
-		
+
 		if (RestApiUtils.isIspwDebugMode())
 		{
 			String buildTag = envVars.get("BUILD_TAG");
 			logger.println("getting buildTag=" + buildTag);
-			
+
 			String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
 			logger.println("debugMsg=" + debugMsg);
 		}
@@ -241,8 +241,8 @@ public class GitToIspwPublish extends Builder
 		public static final String app = StringUtils.EMPTY;
 
 		// Branch mapping
-		public static final String branchMapping = "#The following messages are commented out to show how to use the 'Branch Mapping' field.\n"
-				+ "#Click on the help button to the right of the screen for examples of how to populate this field\n" + "#\n"
+		public static final String branchMapping = "#The following comments show how to use the 'Branch Mapping' field.\n"
+				+ "#Click on the help button to the right of the screen for more details on how to populate this field\n" + "#\n"
 				+ "#*/dev1/ => DEV1, per-commit\n" + "#*/dev2/ => DEV2, per-branch\n"
 				+ "#*/dev3/ => DEV3, custom, a description\n";
 		public static final String containerDesc = StringUtils.EMPTY;
@@ -256,7 +256,7 @@ public class GitToIspwPublish extends Builder
 		@Override
 		public String getDisplayName()
 		{
-			return "GIT to ISPW Integration";
+			return "Git to ISPW Integration";
 		}
 
 		@SuppressWarnings("rawtypes")
