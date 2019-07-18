@@ -1,8 +1,10 @@
 # Compuware ISPW Operations Plugin
 
-This plugin sends an ISPW rest API request to a CES rest endpoint.
+This plugin 
+* sends an ISPW rest API request to a CES rest endpoint.
+* integrates GIT with ISPW.
 
-## Features
+## ISPW Rest API Features
 
 The following features are available in both Pipeline and traditional
 project types:
@@ -49,3 +51,8 @@ echo "...waiting ISPW webhook callback - ${hook.getURL()}"
 data = ispwWaitForWebhook hook
 echo "...ISPW Webhook called back with message - ${data}"
 ```
+
+## GIT to ISPW Integration
+
+
+
