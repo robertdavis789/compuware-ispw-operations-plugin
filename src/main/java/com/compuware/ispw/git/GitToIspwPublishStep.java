@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.compuware.ispw.git;
 
 import java.io.PrintStream;
@@ -40,7 +37,7 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 /**
- * GIT to ISPW integration pipeline build
+ * GIT to ISPW integration pipeline
  * 
  * @author Sam Zhou
  *
@@ -68,6 +65,7 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 
 	public static final class Execution extends AbstractSynchronousNonBlockingStepExecution<Integer>
 	{
+		private static final long serialVersionUID = 1L;
 
 		@Inject
 		private transient GitToIspwPublishStep step;
@@ -117,7 +115,7 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 			}
 
 			String ispwLevel = refMap.getIspwLevel();
-			String containerPref = refMap.getContainerPref();
+			String containerPref = refMap.getContainerPref(); // will be used in future to pass to CLI
 
 			if (RestApiUtils.isIspwDebugMode())
 			{
@@ -260,8 +258,8 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 
 		// Branch mapping
 		public static final String branchMapping = "#The following comments show how to use the 'Branch Mapping' field.\n"
-				+ "#Click on the help button to the right of the screen for more details on how to populate this field\n" + "#\n"
-				+ "#*/dev1/ => DEV1, per-commit\n" + "#*/dev2/ => DEV2, per-branch\n"
+				+ "#Click on the help button to the right of the screen for more details on how to populate this field\n"
+				+ "#\n" + "#*/dev1/ => DEV1, per-commit\n" + "#*/dev2/ => DEV2, per-branch\n"
 				+ "#*/dev3/ => DEV3, custom, a description\n";
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;
