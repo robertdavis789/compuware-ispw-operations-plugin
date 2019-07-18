@@ -54,5 +54,5 @@ echo "...ISPW Webhook called back with message - ${data}"
 
 ## GIT to ISPW Integration
 
-!(ispw git integration.png)
+![GIT to ISPW design](https://github.com/jenkinsci/compuware-ispw-operations-plugin/blob/CWE-150569-ISPW-Git-Integration---Pipeline-build/ispw%20git%20integration.png)
 
