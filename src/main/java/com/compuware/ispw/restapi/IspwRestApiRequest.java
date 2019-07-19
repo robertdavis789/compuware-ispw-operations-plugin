@@ -32,7 +32,6 @@ import com.compuware.ispw.restapi.util.RestApiUtils;
 import com.compuware.jenkins.common.configuration.HostConnection;
 import com.google.common.base.Strings;
 import com.google.common.collect.Range;
-import com.google.common.collect.Ranges;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -625,7 +624,7 @@ public class IspwRestApiRequest extends Builder {
 				}
 
 				checkArgument(from <= to, "Interval %s should be FROM less than TO", code);
-				validRanges.add(Ranges.closed(from, to));
+				validRanges.add(Range.closed(from, to));
 			}
 
 			return validRanges;
