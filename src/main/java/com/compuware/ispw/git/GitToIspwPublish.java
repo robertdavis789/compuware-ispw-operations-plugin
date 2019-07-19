@@ -5,11 +5,15 @@ package com.compuware.ispw.git;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
+import org.apache.http.HttpEntity;
+import org.jenkinsci.plugins.stashNotifier.BitbucketNotifier;
+import org.jenkinsci.plugins.stashNotifier.StashBuildState;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -213,16 +217,44 @@ public class GitToIspwPublish extends Builder
 
 		// invoke the CLI (execute the batch/shell script)
 		int exitValue = launcher.launch().cmds(args).envs(env).stdout(logger).pwd(workDir).join();
+		
+		BitbucketNotifier notifier = new BitbucketNotifier(logger, build, listener);
+		URL url = new URL(gitRepoUrl);
+		String baseUrl = url.getProtocol() + "://" + url.getHost() + ":" + url.getPort();
+		if(gitRepoUrl.contains("/bitbucket/")) { // handle test environment
+			baseUrl += "/bitbucket";
+		}
+		
 		if (exitValue != 0)
 		{
+			try
+			{
+				logger.println("Notify bitbucket success at: " + baseUrl);
+				notifier.notifyStash(baseUrl, gitCredentials, hash, StashBuildState.FAILED, null);
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace(logger);
+			}
+			
 			throw new AbortException("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		else
 		{
 			logger.println("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
+			
+			try
+			{
+				logger.println("Notify bitbucket success at: " + baseUrl);
+				notifier.notifyStash(baseUrl, gitCredentials, hash, StashBuildState.SUCCESSFUL, null);
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace(logger);
+			}
+
 			return true;
 		}
-
 	}
 
 	@Extension

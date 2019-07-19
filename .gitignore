@@ -38,3 +38,6 @@ release.properties
 /.settings/
 /work/
 /work-old/
+/queue.txt
+/queue1.txt
+/queue2.txt
