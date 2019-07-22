@@ -11,7 +11,6 @@ import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
-import org.apache.http.HttpEntity;
 import org.jenkinsci.plugins.stashNotifier.BitbucketNotifier;
 import org.jenkinsci.plugins.stashNotifier.StashBuildState;
 import org.kohsuke.stapler.AncestorInPath;
@@ -221,7 +220,8 @@ public class GitToIspwPublish extends Builder
 		BitbucketNotifier notifier = new BitbucketNotifier(logger, build, listener);
 		URL url = new URL(gitRepoUrl);
 		String baseUrl = url.getProtocol() + "://" + url.getHost() + ":" + url.getPort();
-		if(gitRepoUrl.contains("/bitbucket/")) { // handle test environment
+		if (gitRepoUrl.contains("/bitbucket/"))
+		{ // handle test environment
 			baseUrl += "/bitbucket";
 		}
 		
