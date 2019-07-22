@@ -3,9 +3,11 @@
  */
 package com.compuware.ispw.git;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
@@ -23,6 +25,8 @@ import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
 import com.compuware.jenkins.common.configuration.HostConnection;
 import com.compuware.jenkins.common.utils.ArgumentUtils;
 import com.compuware.jenkins.common.utils.CommonConstants;
+import com.squareup.tape2.ObjectQueue;
+import com.squareup.tape2.QueueFile;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -60,7 +64,9 @@ public class GitToIspwPublish extends Builder
 
 	// Branch mapping
 	private String branchMapping = DescriptorImpl.branchMapping;
-
+	
+	private static String FILE_QUEUE = "file_queue.txt";
+	
 	@DataBoundConstructor
 	public GitToIspwPublish()
 	{
@@ -80,8 +86,28 @@ public class GitToIspwPublish extends Builder
 		if (hash.equals(GitToIspwConstants.VAR_HASH) || ref.equals(GitToIspwConstants.VAR_REF)
 				|| refId.equals(GitToIspwConstants.VAR_REF_ID))
 		{
-			logger.println("hash, ref, refId must be presented in order for the build to work");
-			return false;
+			logger.println("hash, ref, refId must be presented in order for the build to work, reading from file queue if any ...");
+			
+			File file = new File(build.getRootDir(), "../"+FILE_QUEUE);
+			logger.println("queue file path = "+file.toString());
+			
+			QueueFile queueFile = new QueueFile.Builder(file).build();
+			GitInfoConverter converter = new GitInfoConverter();
+			ObjectQueue<GitInfo> objectQueue = ObjectQueue.create(queueFile, converter);
+			
+			GitInfo gitInfo = objectQueue.peek();
+			if (gitInfo != null)
+			{
+				logger.println("Republish old failed commit: gitInfo=" + gitInfo);
+				ref = gitInfo.getRef();
+				refId = gitInfo.getRefId();
+				hash = gitInfo.getHash();
+
+				objectQueue.remove();
+			} else {
+				logger.println("file queue is empty");
+				return true;
+			}
 		}
 		else
 		{
@@ -236,6 +262,17 @@ public class GitToIspwPublish extends Builder
 			{
 				e.printStackTrace(logger);
 			}
+						
+			File file = new File(build.getRootDir(), "../"+FILE_QUEUE);
+			logger.println("queue file path = "+file.toString());
+			
+			QueueFile queueFile = new QueueFile.Builder(file).build();
+			GitInfoConverter converter = new GitInfoConverter();
+			ObjectQueue<GitInfo> objectQueue = ObjectQueue.create(queueFile, converter);
+			objectQueue.add(new GitInfo(ref, refId, hash));
+			
+			List<GitInfo> gitInfos = objectQueue.asList();
+			logger.println("gitInfos = "+gitInfos);
 			
 			throw new AbortException("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
 		}
