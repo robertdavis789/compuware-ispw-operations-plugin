@@ -57,7 +57,7 @@ import jenkins.model.JenkinsLocationConfiguration;
 import net.sf.json.JSONObject;
 
 /**
- * A Bitbucket notifier based on original Stash notifier
+ * A Bitbucket notifier based on Stash notifier
  * 
  * @author Sam Zhou
  *
