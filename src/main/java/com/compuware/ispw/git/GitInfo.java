@@ -8,6 +8,57 @@ public class GitInfo
 	private String refId;
 	private String hash;
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode()
+	{
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((hash == null) ? 0 : hash.hashCode());
+		result = prime * result + ((ref == null) ? 0 : ref.hashCode());
+		result = prime * result + ((refId == null) ? 0 : refId.hashCode());
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		GitInfo other = (GitInfo) obj;
+		if (hash == null)
+		{
+			if (other.hash != null)
+				return false;
+		}
+		else if (!hash.equals(other.hash))
+			return false;
+		if (ref == null)
+		{
+			if (other.ref != null)
+				return false;
+		}
+		else if (!ref.equals(other.ref))
+			return false;
+		if (refId == null)
+		{
+			if (other.refId != null)
+				return false;
+		}
+		else if (!refId.equals(other.refId))
+			return false;
+		return true;
+	}
+
 	public GitInfo(String ref, String refId, String hash)
 	{
 		this.ref = ref;
