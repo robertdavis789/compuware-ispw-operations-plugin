@@ -82,7 +82,7 @@ pipeline {
     stages {
         stage("git to ispw") {
             steps {
-                gitToIspwItegration app: 'PLAY', branchMapping: '''**/dev1 => DEV1, per-commit
+                gitToIspwIntegration app: 'PLAY', branchMapping: '''**/dev1 => DEV1, per-commit
                 **/dev2 => DEV2, per-branch
                 **/dev3 => DEV3, custom, description
 

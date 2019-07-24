@@ -278,7 +278,7 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 		@Override
 		public String getFunctionName()
 		{
-			return "gitToIspwItegration";
+			return "gitToIspwIntegration";
 		}
 
 		// GIT
