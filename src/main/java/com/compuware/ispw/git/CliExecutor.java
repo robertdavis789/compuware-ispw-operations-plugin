@@ -1,6 +1,5 @@
 package com.compuware.ispw.git;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
@@ -15,7 +14,6 @@ import com.compuware.jenkins.common.configuration.HostConnection;
 import com.compuware.jenkins.common.utils.ArgumentUtils;
 import com.compuware.jenkins.common.utils.CommonConstants;
 import com.squareup.tape2.ObjectQueue;
-import com.squareup.tape2.QueueFile;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -26,6 +24,8 @@ import hudson.util.ArgumentListBuilder;
 
 /**
  * 
+ * A reusable CLI executor for both freestyle and pipeline Jenkins build
+ * 
  * @author Sam Zhou
  *
  */
@@ -34,106 +34,70 @@ public class CliExecutor
 	private PrintStream logger;
 	private Run<?, ?> run;
 	private TaskListener listener;
-	private EnvVars env;
+	private EnvVars envVars;
 	private Launcher launcher;
+
+	private CpwrGlobalConfiguration globalConfig;
 
 	private String targetFolder;
 	private String topazCliWorkspace;
 
-	private CpwrGlobalConfiguration globalConfig;
-	private String connectionId;
-	private String credentialsId;
-
-	private String host;
-	private String port;
-	private String protocol;
-	private String codePage;
-	private String timeout;
-
-	private String userId;
-	private String password;
-
-	private String gitRepoUrl;
-	private StandardUsernamePasswordCredentials gitCredentials;
-	private String gitUserId;
-	private String gitPassword;
-
 	private String cliScriptFileRemote;
-
 	private FilePath workDir;
 
-	private String ref;
-	private String refId;
-	private String hash;
+	private ObjectQueue<GitInfo> objectQueue;
 
-	private String stream;
-	private String app;
-	private String ispwLevel;
-
-	private String runtimeConfig;
-
-	public CliExecutor(PrintStream logger, Run<?, ?> run, TaskListener listener, Launcher launcher, EnvVars env,
-			String targetFolder, String topazCliWorkspace, CpwrGlobalConfiguration globalConfig, String connectionId,
-			String credentialsId, String gitRepoUrl, String gitCredentialsId, String cliScriptFileRemote, FilePath workDir,
-			String ref, String refId, String hash, String stream, String app, String ispwLevel, String runtimeConfig)
+	public CliExecutor(PrintStream logger, Run<?, ?> run, TaskListener listener, Launcher launcher, EnvVars envVars,
+			String targetFolder, String topazCliWorkspace, CpwrGlobalConfiguration globalConfig, String cliScriptFileRemote,
+			FilePath workDir, ObjectQueue<GitInfo> objectQueue)
 	{
 		this.logger = logger;
 		this.run = run;
 		this.listener = listener;
-		this.env = env;
+		this.envVars = envVars;
 		this.launcher = launcher;
 
 		this.globalConfig = globalConfig;
-		this.connectionId = connectionId;
-		this.credentialsId = credentialsId;
 
 		this.targetFolder = targetFolder;
 		this.topazCliWorkspace = topazCliWorkspace;
 
+		this.cliScriptFileRemote = cliScriptFileRemote;
+
+		this.workDir = workDir;
+
+		this.objectQueue = objectQueue;
+
+	}
+
+	public boolean execute(boolean bitbucketNotify, String connectionId, String credentialsId, String runtimeConfig,
+			String stream, String app, String ispwLevel, String gitRepoUrl, String gitCredentialsId, String ref, String refId,
+			String hash) throws InterruptedException, IOException
+	{
 		HostConnection connection = globalConfig.getHostConnection(connectionId);
-		this.host = ArgumentUtils.escapeForScript(connection.getHost());
-		this.port = ArgumentUtils.escapeForScript(connection.getPort());
-		this.protocol = connection.getProtocol();
-		this.codePage = connection.getCodePage();
-		this.timeout = ArgumentUtils.escapeForScript(connection.getTimeout());
+		String host = ArgumentUtils.escapeForScript(connection.getHost());
+		String port = ArgumentUtils.escapeForScript(connection.getPort());
+		String protocol = connection.getProtocol();
+		String codePage = connection.getCodePage();
+		String timeout = ArgumentUtils.escapeForScript(connection.getTimeout());
 
 		StandardUsernamePasswordCredentials credentials = globalConfig.getLoginInformation(run.getParent(), credentialsId);
-		this.userId = ArgumentUtils.escapeForScript(credentials.getUsername());
-		this.password = ArgumentUtils.escapeForScript(credentials.getPassword().getPlainText());
-
+		String userId = ArgumentUtils.escapeForScript(credentials.getUsername());
+		String password = ArgumentUtils.escapeForScript(credentials.getPassword().getPlainText());
 		if (RestApiUtils.isIspwDebugMode())
 		{
 			logger.println("host=" + host + ", port=" + port + ", protocol=" + protocol + ", codePage=" + codePage
 					+ ", timeout=" + timeout + ", userId=" + userId + ", password=" + password);
 		}
 
-		this.gitRepoUrl = gitRepoUrl;
-		this.gitCredentials = globalConfig.getLoginInformation(run.getParent(), gitCredentialsId);
-		this.gitUserId = ArgumentUtils.escapeForScript(gitCredentials.getUsername());
-		this.gitPassword = ArgumentUtils.escapeForScript(gitCredentials.getPassword().getPlainText());
-
+		StandardUsernamePasswordCredentials gitCredentials = globalConfig.getLoginInformation(run.getParent(),
+				gitCredentialsId);
+		String gitUserId = ArgumentUtils.escapeForScript(gitCredentials.getUsername());
+		String gitPassword = ArgumentUtils.escapeForScript(gitCredentials.getPassword().getPlainText());
 		if (RestApiUtils.isIspwDebugMode())
 		{
 			logger.println("gitRepoUrl=" + gitRepoUrl + ", gitUserId=" + gitUserId + ", gitPassword=" + gitPassword);
 		}
-
-		this.cliScriptFileRemote = cliScriptFileRemote;
-
-		this.workDir = workDir;
-
-		this.ref = ref;
-		this.refId = refId;
-		this.hash = hash;
-
-		this.stream = stream;
-		this.app = app;
-		this.ispwLevel = ispwLevel;
-
-		this.runtimeConfig = runtimeConfig;
-	}
-
-	public boolean execute() throws InterruptedException, IOException
-	{
 
 		ArgumentListBuilder args = new ArgumentListBuilder();
 		// build the list of arguments to pass to the CLI
@@ -182,7 +146,7 @@ public class CliExecutor
 		logger.println("Shell script: " + args.toString());
 
 		// invoke the CLI (execute the batch/shell script)
-		int exitValue = launcher.launch().cmds(args).envs(env).stdout(logger).pwd(workDir).join();
+		int exitValue = launcher.launch().cmds(args).envs(envVars).stdout(logger).pwd(workDir).join();
 
 		BitbucketNotifier notifier = new BitbucketNotifier(logger, run, listener);
 		URL url = new URL(gitRepoUrl);
@@ -198,25 +162,22 @@ public class CliExecutor
 
 		if (exitValue != 0)
 		{
-			try
+			if (bitbucketNotify)
 			{
-				logger.println("Notify bitbucket success at: " + baseUrl);
-				notifier.notifyStash(baseUrl, gitCredentials, hash, StashBuildState.FAILED, null);
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace(logger);
+				try
+				{
+					logger.println("Notify bitbucket success at: " + baseUrl);
+					notifier.notifyStash(baseUrl, gitCredentials, hash, StashBuildState.FAILED, null);
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace(logger);
+				}
 			}
 
-			File file = new File(run.getRootDir(), "../" + GitToIspwPublish.FILE_QUEUE);
-			logger.println("queue file path = " + file.toString());
-
-			QueueFile queueFile = new QueueFile.Builder(file).build();
-			GitInfoConverter converter = new GitInfoConverter();
-			ObjectQueue<GitInfo> objectQueue = ObjectQueue.create(queueFile, converter);
-			
 			GitInfo newGitInfo = new GitInfo(ref, refId, hash);
-			if(!objectQueue.asList().contains(newGitInfo)) {
+			if (objectQueue != null && !objectQueue.asList().contains(newGitInfo))
+			{
 				objectQueue.add(newGitInfo);
 			}
 
@@ -229,15 +190,18 @@ public class CliExecutor
 		{
 			logger.println("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
 
-			try
+			if (bitbucketNotify)
 			{
-				logger.println("Notify bitbucket success at: " + baseUrl);
+				try
+				{
+					logger.println("Notify bitbucket success at: " + baseUrl);
 
-				notifier.notifyStash(baseUrl, gitCredentials, hash, StashBuildState.SUCCESSFUL, null);
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace(logger);
+					notifier.notifyStash(baseUrl, gitCredentials, hash, StashBuildState.SUCCESSFUL, null);
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace(logger);
+				}
 			}
 
 			return true;
