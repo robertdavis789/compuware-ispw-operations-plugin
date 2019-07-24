@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.compuware.ispw.git;
 
 import java.io.File;
@@ -41,7 +38,7 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 /**
- * GIT to ISPW integration pipeline build
+ * GIT to ISPW integration pipeline
  * 
  * @author Sam Zhou
  *
@@ -69,6 +66,7 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 
 	public static final class Execution extends AbstractSynchronousNonBlockingStepExecution<Integer>
 	{
+		private static final long serialVersionUID = 1L;
 
 		@Inject
 		private transient GitToIspwPublishStep step;
@@ -228,7 +226,9 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 		public static final String app = StringUtils.EMPTY;
 
 		// Branch mapping
+
 		public static final String branchMapping = GitToIspwConstants.BRANCH_MAPPING_DEFAULT;
+
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;
 
@@ -246,7 +246,7 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 		@Override
 		public String getFunctionName()
 		{
-			return "gitToIspwItegration";
+			return "gitToIspwIntegration";
 		}
 
 		// GIT

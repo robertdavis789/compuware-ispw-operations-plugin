@@ -212,6 +212,7 @@ public class GitToIspwPublish extends Builder
 
 		// Branch mapping
 		public static final String branchMapping = GitToIspwConstants.BRANCH_MAPPING_DEFAULT;
+
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;
 
