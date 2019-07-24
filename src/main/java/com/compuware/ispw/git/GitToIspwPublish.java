@@ -60,9 +60,7 @@ public class GitToIspwPublish extends Builder
 
 	// Branch mapping
 	private String branchMapping = DescriptorImpl.branchMapping;
-	
-	public static String FILE_QUEUE = "file_queue.txt";
-	
+
 	@DataBoundConstructor
 	public GitToIspwPublish()
 	{
@@ -75,40 +73,43 @@ public class GitToIspwPublish extends Builder
 		PrintStream logger = listener.getLogger();
 
 		EnvVars envVars = build.getEnvironment(listener);
-		
+
 		String hash = envVars.get(GitToIspwConstants.VAR_HASH, GitToIspwConstants.VAR_HASH);
 		String ref = envVars.get(GitToIspwConstants.VAR_REF, GitToIspwConstants.VAR_REF);
 		String refId = envVars.get(GitToIspwConstants.VAR_REF_ID, GitToIspwConstants.VAR_REF_ID);
 
-		File file = new File(build.getRootDir(), "../"+FILE_QUEUE);
-		logger.println("queue file path = "+file.toString());
-		
+		File file = new File(build.getRootDir(), "../" + GitToIspwConstants.FILE_QUEUE);
+		logger.println("commits queue file path = " + file.toString());
+
 		QueueFile queueFile = new QueueFile.Builder(file).build();
 		GitInfoConverter converter = new GitInfoConverter();
 		ObjectQueue<GitInfo> objectQueue = ObjectQueue.create(queueFile, converter);
-		
+
 		boolean newCommit = true;
 		List<GitInfo> gitInfos = new ArrayList<GitInfo>();
 		if (hash.equals(GitToIspwConstants.VAR_HASH) || ref.equals(GitToIspwConstants.VAR_REF)
 				|| refId.equals(GitToIspwConstants.VAR_REF_ID))
 		{
-			logger.println("hash, ref, refId must be presented in order for the build to work, reading from file queue if any ...");
-		
+			logger.println(
+					"hash, ref, refId must be presented in order for the build to work, reading from file queue if any ...");
+
 			GitInfo gitInfo = objectQueue.peek();
 			if (gitInfo != null)
 			{
 				newCommit = false;
 				gitInfos = objectQueue.asList();
-				logger.println("Republish old failed commits...");
-			} else {
-				logger.println("file queue is empty, do nothing");
+				logger.println("Re-push failed commits to ISPW...");
+			}
+			else
+			{
+				logger.println("No failed commits, do nothing...");
 				return true;
 			}
 		}
 		else
 		{
 			logger.println("New commit - hash=" + hash + ", ref=" + ref + ", refId=" + refId);
-		
+
 			newCommit = true;
 			gitInfos.add(new GitInfo(ref, refId, hash));
 		}
@@ -134,8 +135,7 @@ public class GitToIspwPublish extends Builder
 		String topazCliWorkspace = build.getWorkspace().getRemote() + remoteFileSeparator + CommonConstants.TOPAZ_CLI_WORKSPACE;
 		logger.println("TopazCliWorkspace: " + topazCliWorkspace); //$NON-NLS-1$
 		logger.println("targetFolder: " + targetFolder);
-		
-		EnvVars env = build.getEnvironment(listener);
+
 		FilePath workDir = new FilePath(vChannel, build.getWorkspace().getRemote());
 
 		for (GitInfo gitInfo : gitInfos)
@@ -174,11 +174,11 @@ public class GitToIspwPublish extends Builder
 				logger.println("debugMsg=" + debugMsg);
 			}
 
-			CliExecutor cliExecutor = new CliExecutor(logger, build, listener, launcher, env, targetFolder, topazCliWorkspace,
-					globalConfig, connectionId, credentialsId, gitRepoUrl, gitCredentialsId, cliScriptFileRemote, workDir, ref,
-					refId, hash, stream, app, ispwLevel, runtimeConfig);
+			CliExecutor cliExecutor = new CliExecutor(logger, build, listener, launcher, envVars, targetFolder,
+					topazCliWorkspace, globalConfig, cliScriptFileRemote, workDir, objectQueue);
+			boolean success = cliExecutor.execute(true, connectionId, credentialsId, runtimeConfig, stream, app, ispwLevel,
+					gitRepoUrl, gitCredentialsId, ref, refId, hash);
 
-			boolean success = cliExecutor.execute();
 			if (success)
 			{
 				if (!newCommit)
@@ -191,7 +191,7 @@ public class GitToIspwPublish extends Builder
 				return false;
 			}
 		}
-		
+
 		return true;
 	}
 
@@ -212,8 +212,8 @@ public class GitToIspwPublish extends Builder
 
 		// Branch mapping
 		public static final String branchMapping = "#The following comments show how to use the 'Branch Mapping' field.\n"
-				+ "#Click on the help button to the right of the screen for more details on how to populate this field\n" + "#\n"
-				+ "#*/dev1/ => DEV1, per-commit\n" + "#*/dev2/ => DEV2, per-branch\n"
+				+ "#Click on the help button to the right of the screen for more details on how to populate this field\n"
+				+ "#\n" + "#*/dev1/ => DEV1, per-commit\n" + "#*/dev2/ => DEV2, per-branch\n"
 				+ "#*/dev3/ => DEV3, custom, a description\n";
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;

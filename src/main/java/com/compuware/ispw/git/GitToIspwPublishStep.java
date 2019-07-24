@@ -1,15 +1,15 @@
 package com.compuware.ispw.git;
 
+import java.io.File;
 import java.io.PrintStream;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.inject.Inject;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
-import org.jenkinsci.plugins.stashNotifier.BitbucketNotifier;
-import org.jenkinsci.plugins.stashNotifier.StashBuildState;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
@@ -18,13 +18,12 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.compuware.ispw.restapi.util.RestApiUtils;
 import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
-import com.compuware.jenkins.common.configuration.HostConnection;
 import com.compuware.jenkins.common.utils.ArgumentUtils;
 import com.compuware.jenkins.common.utils.CommonConstants;
-import hudson.AbortException;
+import com.squareup.tape2.ObjectQueue;
+import com.squareup.tape2.QueueFile;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -35,7 +34,6 @@ import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
-import hudson.util.ArgumentListBuilder;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
@@ -90,15 +88,37 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 			String ref = envVars.get(GitToIspwConstants.VAR_REF, GitToIspwConstants.VAR_REF);
 			String refId = envVars.get(GitToIspwConstants.VAR_REF_ID, GitToIspwConstants.VAR_REF_ID);
 
+			File file = new File(run.getRootDir(), "../" + GitToIspwConstants.FILE_QUEUE);
+			logger.println("queue file path = " + file.toString());
+
+			QueueFile queueFile = new QueueFile.Builder(file).build();
+			GitInfoConverter converter = new GitInfoConverter();
+			ObjectQueue<GitInfo> objectQueue = ObjectQueue.create(queueFile, converter);
+
+			boolean newCommit = true;
+			List<GitInfo> gitInfos = new ArrayList<GitInfo>();
 			if (hash.equals(GitToIspwConstants.VAR_HASH) || ref.equals(GitToIspwConstants.VAR_REF)
 					|| refId.equals(GitToIspwConstants.VAR_REF_ID))
 			{
-				logger.println("hash, ref, refId must be presented in order for the build to work");
-				return -1;
+				logger.println(
+						"hash, ref, refId must be presented in order for the build to work, reading from file queue if any ...");
+
+				GitInfo gitInfo = objectQueue.peek();
+				if (gitInfo != null)
+				{
+					newCommit = false;
+					gitInfos = objectQueue.asList();
+					logger.println("Republish old failed commits...");
+				}
+				else
+				{
+					logger.println("file queue is empty, do nothing");
+					return 0;
+				}
 			}
 			else
 			{
-				logger.println("hash=" + hash + ", ref=" + ref + ", refId=" + refId);
+				logger.println("New commit - hash=" + hash + ", ref=" + ref + ", refId=" + refId);
 			}
 
 			Map<String, RefMap> map = GitToIspwUtils.parse(step.branchMapping);
@@ -115,6 +135,8 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 			else
 			{
 				logger.println("mapping refId: " + refId + " to refMap=" + refMap.toString());
+				newCommit = true;
+				gitInfos.add(new GitInfo(ref, refId, hash));
 			}
 
 			String ispwLevel = refMap.getIspwLevel();
@@ -147,130 +169,71 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 			String cliScriptFileRemote = new FilePath(vChannel, cliScriptFile).getRemote();
 			logger.println("cliScriptFileRemote: " + cliScriptFileRemote); //$NON-NLS-1$
 
-			// server args
-			HostConnection connection = globalConfig.getHostConnection(step.connectionId);
-			String host = ArgumentUtils.escapeForScript(connection.getHost());
-			String port = ArgumentUtils.escapeForScript(connection.getPort());
-			String protocol = connection.getProtocol();
-			String codePage = connection.getCodePage();
-			String timeout = ArgumentUtils.escapeForScript(connection.getTimeout());
-			StandardUsernamePasswordCredentials credentials = globalConfig.getLoginInformation(run.getParent(),
-					step.credentialsId);
-			String userId = ArgumentUtils.escapeForScript(credentials.getUsername());
-			String password = ArgumentUtils.escapeForScript(credentials.getPassword().getPlainText());
 			String targetFolder = ArgumentUtils.escapeForScript(run.getRootDir().toString());
 			String topazCliWorkspace = run.getRootDir().toString() + remoteFileSeparator + CommonConstants.TOPAZ_CLI_WORKSPACE;
 			logger.println("TopazCliWorkspace: " + topazCliWorkspace); //$NON-NLS-1$
 			logger.println("targetFolder: " + targetFolder);
-
-			if (RestApiUtils.isIspwDebugMode())
-			{
-				logger.println("host=" + host + ", port=" + port + ", protocol=" + protocol + ", codePage=" + codePage
-						+ ", timeout=" + timeout + ", userId=" + userId + ", password=" + password);
-			}
-
-			StandardUsernamePasswordCredentials gitCredentials = globalConfig.getLoginInformation(run.getParent(),
-					step.gitCredentialsId);
-			String gitUserId = ArgumentUtils.escapeForScript(gitCredentials.getUsername());
-			String gitPassword = ArgumentUtils.escapeForScript(gitCredentials.getPassword().getPlainText());
-
-			if (RestApiUtils.isIspwDebugMode())
-			{
-				logger.println("gitRepoUrl=" + step.gitRepoUrl + ", gitUserId=" + gitUserId + ", gitPassword=" + gitPassword);
-			}
-
-			ArgumentListBuilder args = new ArgumentListBuilder();
-			// build the list of arguments to pass to the CLI
-
-			args.add(cliScriptFileRemote);
-
-			// operation
-			args.add(GitToIspwConstants.ISPW_OPERATION_PARAM, "syncGitToIspw");
-
-			// host connection
-			args.add(CommonConstants.HOST_PARM, host);
-			args.add(CommonConstants.PORT_PARM, port);
-			args.add(CommonConstants.USERID_PARM, userId);
-			args.add(CommonConstants.PW_PARM);
-			args.add(password, true);
-
-			if (StringUtils.isNotBlank(protocol))
-			{
-				args.add(CommonConstants.PROTOCOL_PARM, protocol);
-			}
-
-			args.add(CommonConstants.CODE_PAGE_PARM, codePage);
-			args.add(CommonConstants.TIMEOUT_PARM, timeout);
-			args.add(CommonConstants.TARGET_FOLDER_PARM, targetFolder);
-			args.add(CommonConstants.DATA_PARM, topazCliWorkspace);
-
-			if (StringUtils.isNotBlank(step.runtimeConfig))
-			{
-				args.add(GitToIspwConstants.ISPW_SERVER_CONFIG_PARAM, step.runtimeConfig);
-			}
-
-			// ispw
-			args.add(GitToIspwConstants.ISPW_SERVER_STREAM_PARAM, step.stream);
-			args.add(GitToIspwConstants.ISPW_SERVER_APP_PARAM, step.app);
-			args.add(GitToIspwConstants.ISPW_SERVER_CHECKOUT_LEV_PARAM, ispwLevel);
-
-			// git
-			args.add(GitToIspwConstants.GIT_USERID_PARAM, gitUserId);
-			args.add(GitToIspwConstants.GIT_PW_PARAM);
-			args.add(gitPassword, true);
-			args.add(GitToIspwConstants.GIT_REPO_URL_PARAM, ArgumentUtils.escapeForScript(step.gitRepoUrl));
-			args.add(GitToIspwConstants.GIT_REF_PARAM, ref);
-			args.add(GitToIspwConstants.GIT_HASH_PARAM, hash);
 
 			// create the CLI workspace (in case it doesn't already exist)
 
 			FilePath workDir = new FilePath(vChannel, run.getRootDir().toString());
 			workDir.mkdirs();
 
-			logger.println("Shell script: " + args.toString());
-
-			// invoke the CLI (execute the batch/shell script)
-			int exitValue = launcher.launch().cmds(args).envs(envVars).stdout(logger).pwd(workDir).join();
-			
-			BitbucketNotifier notifier = new BitbucketNotifier(logger, run, listener);
-			URL url = new URL(step.gitRepoUrl);
-			String baseUrl = url.getProtocol() + "://" + url.getHost() + ":" + url.getPort();
-			if (step.gitRepoUrl.contains("/bitbucket/"))
-			{ // handle test environment
-				baseUrl += "/bitbucket";
-			}
-			
-			if (exitValue != 0)
+			for (GitInfo gitInfo : gitInfos)
 			{
-				try
+				logger.println("gitInfo = " + gitInfo);
+
+				ref = gitInfo.getRef();
+				refId = gitInfo.getRefId();
+				hash = gitInfo.getHash();
+
+				Map<String, RefMap> map = GitToIspwUtils.parse(step.branchMapping);
+				logger.println("map=" + map);
+
+				BranchPatternMatcher matcher = new BranchPatternMatcher(map, logger);
+				RefMap refMap = matcher.match(refId);
+
+				if (refMap == null)
 				{
-					logger.println("Notify bitbucket success at: " + baseUrl);
-					notifier.notifyStash(baseUrl, gitCredentials, hash, StashBuildState.FAILED, null);
+					logger.println("branch mapping is not defined for refId: " + refId);
+					return -1;
 				}
-				catch (Exception e)
+				else
 				{
-					e.printStackTrace(logger);
+					logger.println("mapping refId: " + refId + " to refMap=" + refMap.toString());
 				}
-				
-				throw new AbortException("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-			else
-			{
-				logger.println("Call " + osFile + " exited with value = " + exitValue); //$NON-NLS-1$ //$NON-NLS-2$
-				
-				try
+
+				String ispwLevel = refMap.getIspwLevel();
+				String containerPref = refMap.getContainerPref();
+
+				if (RestApiUtils.isIspwDebugMode())
 				{
-					logger.println("Notify bitbucket success at: " + baseUrl);
-					notifier.notifyStash(baseUrl, gitCredentials, hash, StashBuildState.SUCCESSFUL, null);
+					String buildTag = envVars.get("BUILD_TAG");
+					logger.println("getting buildTag=" + buildTag);
+
+					String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+					logger.println("debugMsg=" + debugMsg);
 				}
-				catch (Exception e)
+
+				CliExecutor cliExecutor = new CliExecutor(logger, run, listener, launcher, envVars, targetFolder,
+						topazCliWorkspace, globalConfig, cliScriptFileRemote, workDir, objectQueue);
+				boolean success = cliExecutor.execute(true, step.connectionId, step.credentialsId, step.runtimeConfig,
+						step.stream, step.app, ispwLevel, step.gitRepoUrl, step.gitCredentialsId, ref, refId, hash);
+
+				if (success)
 				{
-					e.printStackTrace(logger);
+					if (!newCommit)
+					{
+						objectQueue.remove();
+					}
 				}
-				
-				return exitValue;
+				else
+				{
+					return -1;
+				}
 			}
 
+			return 0;
 		}
 	}
 

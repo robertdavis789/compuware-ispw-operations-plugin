@@ -2,6 +2,8 @@ package com.compuware.ispw.git;
 
 public class GitToIspwConstants
 {
+	public static String FILE_QUEUE = "file_queue.txt";
+	
 	public static String VAR_REF_ID = "refId"; //$NON-NLS-1$
 	public static String VAR_REF = "ref"; //$NON-NLS-1$
 	public static String VAR_HASH = "hash"; //$NON-NLS-1$

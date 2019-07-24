@@ -262,6 +262,14 @@
             <version>19.0</version>
         </dependency>
         
+		<!-- https://mvnrepository.com/artifact/org.jenkins-ci.plugins/matrix-project -->
+		<dependency>
+		    <groupId>org.jenkins-ci.plugins</groupId>
+		    <artifactId>matrix-project</artifactId>
+		    <version>1.4</version>
+		</dependency>
+
+
 	</dependencies>
 
 </project>
