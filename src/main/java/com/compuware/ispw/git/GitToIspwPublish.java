@@ -164,6 +164,7 @@ public class GitToIspwPublish extends Builder
 
 			String ispwLevel = refMap.getIspwLevel();
 			String containerPref = refMap.getContainerPref();
+			String containerDesc = refMap.getContainerDesc();
 
 			if (RestApiUtils.isIspwDebugMode())
 			{
@@ -177,7 +178,7 @@ public class GitToIspwPublish extends Builder
 			CliExecutor cliExecutor = new CliExecutor(logger, build, listener, launcher, envVars, targetFolder,
 					topazCliWorkspace, globalConfig, cliScriptFileRemote, workDir, objectQueue);
 			boolean success = cliExecutor.execute(true, connectionId, credentialsId, runtimeConfig, stream, app, ispwLevel,
-					gitRepoUrl, gitCredentialsId, ref, refId, hash);
+					containerPref, containerDesc, gitRepoUrl, gitCredentialsId, ref, refId, hash);
 
 			if (success)
 			{

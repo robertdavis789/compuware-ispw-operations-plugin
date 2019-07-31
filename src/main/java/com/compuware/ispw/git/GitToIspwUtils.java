@@ -81,6 +81,7 @@ public class GitToIspwUtils
 				String pattern = StringUtils.trimToEmpty(line.substring(0, indexOfArrow));
 				String ispwLevel = StringUtils.EMPTY;
 				String containerPref = GitToIspwConstants.CONTAINER_PREF_PER_COMMIT;
+				String containerDesc = StringUtils.EMPTY;
 
 				String rest = line.substring(indexOfArrow + 2);
 				StringTokenizer tokenizer = new StringTokenizer(rest, ",");
@@ -94,7 +95,11 @@ public class GitToIspwUtils
 					containerPref = StringUtils.trimToEmpty(tokenizer.nextToken());
 				}
 
-				RefMap refMap = new RefMap(ispwLevel, containerPref);
+				if(tokenizer.hasMoreElements()) {
+					containerDesc = StringUtils.trimToEmpty(tokenizer.nextToken());
+				}
+				
+				RefMap refMap = new RefMap(ispwLevel, containerPref, containerDesc);
 				map.put(pattern, refMap);
 			}
 		}

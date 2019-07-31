@@ -27,9 +27,12 @@ public class GitToIspwConstants
 	public static final String GIT_PW_PARAM = "-gitPassword"; //$NON-NLS-1$
 	public static final String GIT_REF_PARAM = "-gitBranch"; //$NON-NLS-1$
 	public static final String GIT_HASH_PARAM = "-gitCommit"; //$NON-NLS-1$
+
+	public static final String CONTAINER_CREATION_PREF_ARG_PARAM = "-ispwContainerCreation"; //$NON-NLS-1$
+	public static final String CONTAINER_DESCRIPTION_ARG_PARAM = "-ispwContainerDescription"; //$NON-NLS-1$
 	
 	public static final String BRANCH_MAPPING_DEFAULT = "#The following comments show how to use the 'Branch Mapping' field.\n"
 			+ "#Click on the help button to the right of the screen for more details on how to populate this field\n"
-			+ "#\n" + "#**/dev1/ => DEV1, per-commit\n" + "#**/dev2/ => DEV2, per-branch\n"
-			+ "#**/dev3/ => DEV3, custom, a description\n";
+			+ "#\n" + "#**/dev1 => DEV1, per-commit\n" + "#**/dev2 => DEV2, per-branch\n"
+			+ "#**/dev3 => DEV3, custom, a description\n";
 }

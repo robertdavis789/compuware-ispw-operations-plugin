@@ -71,7 +71,8 @@ public class CliExecutor
 	}
 
 	public boolean execute(boolean bitbucketNotify, String connectionId, String credentialsId, String runtimeConfig,
-			String stream, String app, String ispwLevel, String gitRepoUrl, String gitCredentialsId, String ref, String refId,
+			String stream, String app, String ispwLevel, String containerPref, String containerDesc, 
+			String gitRepoUrl, String gitCredentialsId, String ref, String refId,
 			String hash) throws InterruptedException, IOException
 	{
 		HostConnection connection = globalConfig.getHostConnection(connectionId);
@@ -87,7 +88,8 @@ public class CliExecutor
 		if (RestApiUtils.isIspwDebugMode())
 		{
 			logger.println("host=" + host + ", port=" + port + ", protocol=" + protocol + ", codePage=" + codePage
-					+ ", timeout=" + timeout + ", userId=" + userId + ", password=" + password);
+					+ ", timeout=" + timeout + ", userId=" + userId + ", password=" + password + ", containerPref="
+					+ containerPref + ", containerDesc=" + containerDesc);
 		}
 
 		StandardUsernamePasswordCredentials gitCredentials = globalConfig.getLoginInformation(run.getParent(),
@@ -123,7 +125,7 @@ public class CliExecutor
 		args.add(CommonConstants.TIMEOUT_PARM, timeout);
 		args.add(CommonConstants.TARGET_FOLDER_PARM, targetFolder);
 		args.add(CommonConstants.DATA_PARM, topazCliWorkspace);
-
+		
 		if (StringUtils.isNotBlank(runtimeConfig))
 		{
 			args.add(GitToIspwConstants.ISPW_SERVER_CONFIG_PARAM, runtimeConfig);
@@ -133,7 +135,17 @@ public class CliExecutor
 		args.add(GitToIspwConstants.ISPW_SERVER_STREAM_PARAM, stream);
 		args.add(GitToIspwConstants.ISPW_SERVER_APP_PARAM, app);
 		args.add(GitToIspwConstants.ISPW_SERVER_CHECKOUT_LEV_PARAM, ispwLevel);
+		
+		if (StringUtils.isNotBlank(containerPref))
+		{
+			args.add(GitToIspwConstants.CONTAINER_CREATION_PREF_ARG_PARAM, StringUtils.trimToEmpty(containerPref));
+		}
 
+		if (StringUtils.isNotBlank(containerDesc))
+		{
+			args.add(GitToIspwConstants.CONTAINER_DESCRIPTION_ARG_PARAM, StringUtils.trimToEmpty(containerDesc));
+		}
+		
 		// git
 		args.add(GitToIspwConstants.GIT_USERID_PARAM, gitUserId);
 		args.add(GitToIspwConstants.GIT_PW_PARAM);

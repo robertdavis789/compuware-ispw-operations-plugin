@@ -178,6 +178,7 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 
 				String ispwLevel = refMap.getIspwLevel();
 				String containerPref = refMap.getContainerPref();
+				String containerDesc = refMap.getContainerDesc();
 
 				if (RestApiUtils.isIspwDebugMode())
 				{
@@ -191,7 +192,7 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 				CliExecutor cliExecutor = new CliExecutor(logger, run, listener, launcher, envVars, targetFolder,
 						topazCliWorkspace, globalConfig, cliScriptFileRemote, workDir, objectQueue);
 				boolean success = cliExecutor.execute(true, step.connectionId, step.credentialsId, step.runtimeConfig,
-						step.stream, step.app, ispwLevel, step.gitRepoUrl, step.gitCredentialsId, ref, refId, hash);
+						step.stream, step.app, ispwLevel, containerPref, containerDesc, step.gitRepoUrl, step.gitCredentialsId, ref, refId, hash);
 
 				if (success)
 				{

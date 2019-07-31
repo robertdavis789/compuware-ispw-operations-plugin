@@ -1,17 +1,23 @@
 package com.compuware.ispw.git;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 public class RefMap
 {
 	private String containerPref = GitToIspwConstants.CONTAINER_PREF_PER_COMMIT;
+	private String containerDesc = StringUtils.EMPTY;
+	
 	private String ispwLevel;
 
-	public RefMap(String ispwLevel, String containerPref)
+	public RefMap(String ispwLevel, String containerPref, String containerDesc)
 	{
-		this.containerPref = containerPref;
 		this.ispwLevel = ispwLevel;
+		
+		this.containerPref = containerPref;
+		this.containerDesc = containerDesc;
+		
 	}
 
 	public String toString()
@@ -36,6 +42,22 @@ public class RefMap
 		this.containerPref = containerPref;
 	}
 
+	/**
+	 * @return the containerDesc
+	 */
+	public String getContainerDesc()
+	{
+		return containerDesc;
+	}
+
+	/**
+	 * @param containerDesc the containerDesc to set
+	 */
+	public void setContainerDesc(String containerDesc)
+	{
+		this.containerDesc = containerDesc;
+	}
+	
 	/**
 	 * @return the ispwLevel
 	 */
