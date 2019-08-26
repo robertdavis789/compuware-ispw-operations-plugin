@@ -152,6 +152,7 @@ public class CliExecutor
 		args.add(GitToIspwConstants.GIT_HASH_PARAM, currentPush.getToHash());
 		args.add(GitToIspwConstants.JENKINS_WORKSPACE_PATH_ARG_PARAM, targetFolder);
 
+
 		workDir.mkdirs();
 		logger.println("Shell script: " + args.toString());
 

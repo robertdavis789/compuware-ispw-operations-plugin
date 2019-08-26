@@ -31,6 +31,7 @@ public class GitToIspwConstants
 	public static final String JENKINS_WORKSPACE_PATH_ARG_PARAM = "-jenkinsWorkspaceJobPath";  //$NON-NLS-1$
 	public static final String GIT_FROM_HASH_PARAM = "-gitFromHash"; //$NON-NLS-1$
 
+
 	public static final String CONTAINER_CREATION_PREF_ARG_PARAM = "-ispwContainerCreation"; //$NON-NLS-1$
 	public static final String CONTAINER_DESCRIPTION_ARG_PARAM = "-ispwContainerDescription"; //$NON-NLS-1$
 	

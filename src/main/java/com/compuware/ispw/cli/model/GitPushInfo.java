@@ -181,8 +181,12 @@ public class GitPushInfo implements Serializable
 	}
 
 	/**
+<<<<<<< HEAD
 	 * @param fromHash
 	 *            the fromHash to set
+=======
+	 * @param fromHash the fromHash to set
+>>>>>>> CWE-151387
 	 */
 	public void setFromHash(String fromHash)
 	{
@@ -198,8 +202,12 @@ public class GitPushInfo implements Serializable
 	}
 
 	/**
+<<<<<<< HEAD
 	 * @param toHash
 	 *            the toHash to set
+=======
+	 * @param toHash the toHash to set
+>>>>>>> CWE-151387
 	 */
 	public void setToHash(String toHash)
 	{
@@ -215,8 +223,12 @@ public class GitPushInfo implements Serializable
 	}
 
 	/**
+<<<<<<< HEAD
 	 * @param successfulCommits
 	 *            the successfulCommits to set
+=======
+	 * @param successfulCommits the successfulCommits to set
+>>>>>>> CWE-151387
 	 */
 	public void setSuccessfulCommits(ArrayList<String> successfulCommits)
 	{
@@ -232,8 +244,12 @@ public class GitPushInfo implements Serializable
 	}
 
 	/**
+<<<<<<< HEAD
 	 * @param failedCommits
 	 *            the failedCommits to set
+=======
+	 * @param failedCommits the failedCommits to set
+>>>>>>> CWE-151387
 	 */
 	public void setFailedCommits(ArrayList<String> failedCommits)
 	{
@@ -249,8 +265,12 @@ public class GitPushInfo implements Serializable
 	}
 
 	/**
+<<<<<<< HEAD
 	 * @param ispwLevel
 	 *            the ispwLevel to set
+=======
+	 * @param ispwLevel the ispwLevel to set
+>>>>>>> CWE-151387
 	 */
 	public void setIspwLevel(String ispwLevel)
 	{
@@ -266,8 +286,12 @@ public class GitPushInfo implements Serializable
 	}
 
 	/**
+<<<<<<< HEAD
 	 * @param containerCreationPref
 	 *            the containerCreationPref to set
+=======
+	 * @param containerCreationPref the containerCreationPref to set
+>>>>>>> CWE-151387
 	 */
 	public void setContainerCreationPref(String containerCreationPref)
 	{
