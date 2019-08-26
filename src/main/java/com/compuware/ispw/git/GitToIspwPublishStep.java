@@ -2,14 +2,8 @@ package com.compuware.ispw.git;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import javax.inject.Inject;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
@@ -18,22 +12,24 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.IndexTreeList;
+import org.mapdb.Serializer;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.compuware.ispw.cli.model.GitPushInfo;
+import com.compuware.ispw.cli.model.IGitToIspwPublish;
 import com.compuware.ispw.restapi.util.RestApiUtils;
 import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
-import com.compuware.jenkins.common.utils.ArgumentUtils;
-import com.compuware.jenkins.common.utils.CommonConstants;
-import com.squareup.tape2.ObjectQueue;
-import com.squareup.tape2.QueueFile;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.Launcher;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.remoting.VirtualChannel;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
@@ -43,7 +39,7 @@ import jenkins.model.Jenkins;
  * @author Sam Zhou
  *
  */
-public class GitToIspwPublishStep extends AbstractStepImpl
+public class GitToIspwPublishStep extends AbstractStepImpl implements IGitToIspwPublish
 {
 	// GIT related
 	private String gitRepoUrl = DescriptorImpl.gitRepoUrl;
@@ -58,6 +54,7 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 
 	// Branch mapping
 	private String branchMapping = DescriptorImpl.branchMapping;
+	private boolean clearFailures = DescriptorImpl.clearFailures;
 
 	@DataBoundConstructor
 	public GitToIspwPublishStep()
@@ -79,135 +76,65 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 		@Override
 		protected Integer run() throws Exception
 		{
-
 			PrintStream logger = listener.getLogger();
 
 			EnvVars envVars = getContext().get(hudson.EnvVars.class);
-
-			String hash = envVars.get(GitToIspwConstants.VAR_HASH, GitToIspwConstants.VAR_HASH);
-			String ref = envVars.get(GitToIspwConstants.VAR_REF, GitToIspwConstants.VAR_REF);
-			String refId = envVars.get(GitToIspwConstants.VAR_REF_ID, GitToIspwConstants.VAR_REF_ID);
-
-			File file = new File(run.getRootDir(), "../" + GitToIspwConstants.FILE_QUEUE);
-			logger.println("queue file path = " + file.toString());
-
-			QueueFile queueFile = new QueueFile.Builder(file).build();
-			GitInfoConverter converter = new GitInfoConverter();
-			ObjectQueue<GitInfo> objectQueue = ObjectQueue.create(queueFile, converter);
-
-			boolean newCommit = true;
-			List<GitInfo> gitInfos = new ArrayList<GitInfo>();
-			if (hash.equals(GitToIspwConstants.VAR_HASH) || ref.equals(GitToIspwConstants.VAR_REF)
-					|| refId.equals(GitToIspwConstants.VAR_REF_ID))
+			GitToIspwUtils.trimEnvironmentVariables(envVars);
+			String workspacePath = envVars.get("WORKSPACE");
+			File workspaceFile = new File(workspacePath);
+			workspaceFile.mkdirs();
+			File failedCommitFile = new File(workspacePath, GitToIspwConstants.FAILED_COMMIT_FILE_NAME);
+			logger.println("Previous push queue file = " + failedCommitFile.getAbsolutePath());
+			DB mapDb = DBMaker.fileDB(failedCommitFile.getAbsolutePath()).transactionEnable().make();
+			IndexTreeList<GitPushInfo> gitPushList = null;
+			boolean success = true;
+			try
 			{
-				logger.println(
-						"hash, ref, refId must be presented in order for the build to work, reading from file queue if any ...");
-
-				GitInfo gitInfo = objectQueue.peek();
-				if (gitInfo != null)
+				if (mapDb != null)
 				{
-					newCommit = false;
-					gitInfos = objectQueue.asList();
-					logger.println("Republish old failed commits...");
+					gitPushList = (IndexTreeList<GitPushInfo>) mapDb.indexTreeList("pushList", Serializer.JAVA).createOrOpen();
 				}
-				else
+
+				if (step.clearFailures && gitPushList != null)
 				{
-					logger.println("file queue is empty, do nothing");
+					logger.println("Attempting to clear commit failures file " + failedCommitFile.getAbsolutePath());
+					gitPushList.clear();
+					mapDb.commit();
+				}
+
+				// Add the new push
+				GitToIspwUtils.addNewPushToDb(logger, envVars, mapDb, gitPushList, step.branchMapping);
+
+				CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
+				Launcher launcher = getContext().get(Launcher.class);
+				// Sync to ISPW
+				success = GitToIspwUtils.callCli(launcher, run, logger, mapDb, gitPushList, envVars, step,
+						workspacePath);
+
+				// Post the results
+				StandardUsernamePasswordCredentials gitCredentials = globalConfig.getLoginInformation(run.getParent(),
+						step.gitCredentialsId);
+				mapDb = DBMaker.fileDB(failedCommitFile.getAbsolutePath()).transactionEnable().make();
+				GitToIspwUtils.logResultsAndNotifyBitbucket(logger, run, listener, mapDb, step.gitRepoUrl, gitCredentials);
+				if( success)
 					return 0;
-				}
-			}
-			else
-			{
-				logger.println("New commit - hash=" + hash + ", ref=" + ref + ", refId=" + refId);
-
-				newCommit = true;
-				gitInfos.add(new GitInfo(ref, refId, hash));
-			}
-
-			CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
-
-			Launcher launcher = getContext().get(Launcher.class);
-			assert launcher != null;
-			VirtualChannel vChannel = launcher.getChannel();
-
-			assert vChannel != null;
-			Properties remoteProperties = vChannel.call(new RemoteSystemProperties());
-			String remoteFileSeparator = remoteProperties.getProperty(CommonConstants.FILE_SEPARATOR_PROPERTY_KEY);
-			String osFile = launcher.isUnix()
-					? GitToIspwConstants.SCM_DOWNLOADER_CLI_SH
-					: GitToIspwConstants.SCM_DOWNLOADER_CLI_BAT;
-
-			String cliScriptFile = globalConfig.getTopazCLILocation(launcher) + remoteFileSeparator + osFile;
-			logger.println("cliScriptFile: " + cliScriptFile); //$NON-NLS-1$
-			String cliScriptFileRemote = new FilePath(vChannel, cliScriptFile).getRemote();
-			logger.println("cliScriptFileRemote: " + cliScriptFileRemote); //$NON-NLS-1$
-
-			String targetFolder = ArgumentUtils.escapeForScript(run.getRootDir().toString());
-			String topazCliWorkspace = run.getRootDir().toString() + remoteFileSeparator + CommonConstants.TOPAZ_CLI_WORKSPACE;
-			logger.println("TopazCliWorkspace: " + topazCliWorkspace); //$NON-NLS-1$
-			logger.println("targetFolder: " + targetFolder);
-
-			// create the CLI workspace (in case it doesn't already exist)
-
-			FilePath workDir = new FilePath(vChannel, run.getRootDir().toString());
-			workDir.mkdirs();
-
-			for (GitInfo gitInfo : gitInfos)
-			{
-				logger.println("gitInfo = " + gitInfo);
-
-				ref = gitInfo.getRef();
-				refId = gitInfo.getRefId();
-				hash = gitInfo.getHash();
-
-				Map<String, RefMap> map = GitToIspwUtils.parse(step.branchMapping);
-				logger.println("map=" + map);
-
-				BranchPatternMatcher matcher = new BranchPatternMatcher(map, logger);
-				RefMap refMap = matcher.match(refId);
-
-				if (refMap == null)
-				{
-					logger.println("branch mapping is not defined for refId: " + refId);
-					return -1;
-				}
 				else
-				{
-					logger.println("mapping refId: " + refId + " to refMap=" + refMap.toString());
-				}
+					throw new AbortException("An error occurred while synchronizing source to ISPW");
 
-				String ispwLevel = refMap.getIspwLevel();
-				String containerPref = refMap.getContainerPref();
-				String containerDesc = refMap.getContainerDesc();
-
-				if (RestApiUtils.isIspwDebugMode())
-				{
-					String buildTag = envVars.get("BUILD_TAG");
-					logger.println("getting buildTag=" + buildTag);
-
-					String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
-					logger.println("debugMsg=" + debugMsg);
-				}
-
-				CliExecutor cliExecutor = new CliExecutor(logger, run, listener, launcher, envVars, targetFolder,
-						topazCliWorkspace, globalConfig, cliScriptFileRemote, workDir, objectQueue);
-				boolean success = cliExecutor.execute(true, step.connectionId, step.credentialsId, step.runtimeConfig,
-						step.stream, step.app, ispwLevel, containerPref, containerDesc, step.gitRepoUrl, step.gitCredentialsId, ref, refId, hash);
-
-				if (success)
-				{
-					if (!newCommit)
-					{
-						objectQueue.remove();
-					}
-				}
-				else
-				{
-					return -1;
-				}
 			}
+			finally
+			{
+				if (mapDb != null && !mapDb.isClosed())
+				{
+					mapDb.commit();
+					mapDb.close();
+				}
+				if( success)
+					return 0;
+				else
+					throw new AbortException("An error occurred while synchronizing source to ISPW");
 
-			return 0;
+			}
 		}
 	}
 
@@ -232,6 +159,8 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;
+
+		public static final boolean clearFailures = false;
 
 		public DescriptorImpl()
 		{
@@ -419,6 +348,24 @@ public class GitToIspwPublishStep extends AbstractStepImpl
 	public void setBranchMapping(String branchMapping)
 	{
 		this.branchMapping = branchMapping;
+	}
+
+	/**
+	 * @return the clearFailures
+	 */
+	public boolean isClearFailedCommits()
+	{
+		return clearFailures;
+	}
+
+	/**
+	 * @param clearFailedCommits
+	 *            the clearFailures to set
+	 */
+	@DataBoundSetter
+	public void setClearFailedCommits(boolean clearFailedCommits)
+	{
+		this.clearFailures = clearFailedCommits;
 	}
 
 }

@@ -6,10 +6,7 @@ package com.compuware.ispw.git;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
@@ -17,16 +14,18 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.IndexTreeList;
+import org.mapdb.Serializer;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.compuware.ispw.cli.model.GitPushInfo;
+import com.compuware.ispw.cli.model.IGitToIspwPublish;
 import com.compuware.ispw.restapi.util.RestApiUtils;
 import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
-import com.compuware.jenkins.common.utils.ArgumentUtils;
-import com.compuware.jenkins.common.utils.CommonConstants;
-import com.squareup.tape2.ObjectQueue;
-import com.squareup.tape2.QueueFile;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.Launcher;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
@@ -36,7 +35,6 @@ import hudson.model.BuildListener;
 import hudson.model.Item;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.UserRemoteConfig;
-import hudson.remoting.VirtualChannel;
 import hudson.scm.NullSCM;
 import hudson.scm.SCM;
 import hudson.tasks.BuildStepDescriptor;
@@ -50,8 +48,12 @@ import jenkins.model.Jenkins;
  * @author Sam Zhou
  *
  */
-public class GitToIspwPublish extends Builder
+public class GitToIspwPublish extends Builder implements IGitToIspwPublish
 {
+	// Git related
+	String gitRepoUrl = StringUtils.EMPTY;
+	String gitCredentialsId = StringUtils.EMPTY;
+
 	// ISPW related
 	private String connectionId = DescriptorImpl.connectionId;
 	private String credentialsId = DescriptorImpl.credentialsId;
@@ -61,6 +63,7 @@ public class GitToIspwPublish extends Builder
 
 	// Branch mapping
 	private String branchMapping = DescriptorImpl.branchMapping;
+	private boolean clearFailures = DescriptorImpl.clearFailures;
 
 	@DataBoundConstructor
 	public GitToIspwPublish()
@@ -71,9 +74,7 @@ public class GitToIspwPublish extends Builder
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
 			throws InterruptedException, IOException
 	{
-		String gitRepoUrl = StringUtils.EMPTY;
-		String gitCredentialsId = StringUtils.EMPTY;
-		
+
 		PrintStream logger = listener.getLogger();
 
 		AbstractProject<?, ?> project = build.getProject();
@@ -90,149 +91,77 @@ public class GitToIspwPublish extends Builder
 			if (scm instanceof NullSCM)
 			{
 				throw new AbortException(
-						"Jenkins Git Plugin SCM is required along with selecting the Git option at the Source Code Management section and providing the Git repository URL and credentials."); //$NON-NLS-1$
+						"Jenkins Git Plugin SCM is required along with selecting the Git option in the Source Code Management section and providing the Git repository URL and credentials."); //$NON-NLS-1$
 			}
 			else
 			{
 				throw new AbortException(
-						"The Git option must be selected in the Jenkins project Source Code Management section along with providing the Git repository URL and credentials.  The Source Code Management section selection type is " //$NON-NLS-1$
+						"The Git option must be selected in the Jenkins project Source Code Management section along with providing the Git repository URL and credentials. The Source Code Management section selection type is " //$NON-NLS-1$
 								+ scm.getType());
 			}
 
 		}
 
 		EnvVars envVars = build.getEnvironment(listener);
-
-		String hash = envVars.get(GitToIspwConstants.VAR_HASH, GitToIspwConstants.VAR_HASH);
-		String ref = envVars.get(GitToIspwConstants.VAR_REF, GitToIspwConstants.VAR_REF);
-		String refId = envVars.get(GitToIspwConstants.VAR_REF_ID, GitToIspwConstants.VAR_REF_ID);
-
-		File file = new File(build.getRootDir(), "../" + GitToIspwConstants.FILE_QUEUE);
-		logger.println("commits queue file path = " + file.toString());
-
-		QueueFile queueFile = new QueueFile.Builder(file).build();
-		GitInfoConverter converter = new GitInfoConverter();
-		ObjectQueue<GitInfo> objectQueue = ObjectQueue.create(queueFile, converter);
-
-		boolean newCommit = true;
-		List<GitInfo> gitInfos = new ArrayList<GitInfo>();
-		if (hash.equals(GitToIspwConstants.VAR_HASH) || ref.equals(GitToIspwConstants.VAR_REF)
-				|| refId.equals(GitToIspwConstants.VAR_REF_ID))
+		GitToIspwUtils.trimEnvironmentVariables(envVars);
+		String workspacePath = envVars.get("WORKSPACE"); //$NON-NLS-1$
+		File workspaceFile = new File(workspacePath);
+		workspaceFile.mkdirs();
+		File failedCommitFile = new File(workspacePath, GitToIspwConstants.FAILED_COMMIT_FILE_NAME);
+		logger.println("Previous push queue file = " + failedCommitFile.getAbsolutePath());
+		DB mapDb = DBMaker.fileDB(failedCommitFile.getAbsolutePath()).transactionEnable().make();
+		try
 		{
-			logger.println(
-					"hash, ref, refId must be presented in order for the build to work, reading from file queue if any ...");
-
-			GitInfo gitInfo = objectQueue.peek();
-			if (gitInfo != null)
+			IndexTreeList<GitPushInfo> gitPushList = null;
+			if (mapDb != null)
 			{
-				newCommit = false;
-				gitInfos = objectQueue.asList();
-				logger.println("Re-push failed commits to ISPW...");
-			}
-			else
-			{
-				logger.println("No failed commits, do nothing...");
-				return true;
-			}
-		}
-		else
-		{
-			logger.println("New commit - hash=" + hash + ", ref=" + ref + ", refId=" + refId);
-
-			newCommit = true;
-			gitInfos.add(new GitInfo(ref, refId, hash));
-		}
-
-		CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
-
-		assert launcher != null;
-		VirtualChannel vChannel = launcher.getChannel();
-
-		assert vChannel != null;
-		Properties remoteProperties = vChannel.call(new RemoteSystemProperties());
-		String remoteFileSeparator = remoteProperties.getProperty(CommonConstants.FILE_SEPARATOR_PROPERTY_KEY);
-		String osFile = launcher.isUnix()
-				? GitToIspwConstants.SCM_DOWNLOADER_CLI_SH
-				: GitToIspwConstants.SCM_DOWNLOADER_CLI_BAT;
-
-		String cliScriptFile = globalConfig.getTopazCLILocation(launcher) + remoteFileSeparator + osFile;
-		logger.println("cliScriptFile: " + cliScriptFile); //$NON-NLS-1$
-		String cliScriptFileRemote = new FilePath(vChannel, cliScriptFile).getRemote();
-		logger.println("cliScriptFileRemote: " + cliScriptFileRemote); //$NON-NLS-1$
-
-		String targetFolder = ArgumentUtils.escapeForScript(build.getWorkspace().getRemote());
-		String topazCliWorkspace = build.getWorkspace().getRemote() + remoteFileSeparator + CommonConstants.TOPAZ_CLI_WORKSPACE;
-		logger.println("TopazCliWorkspace: " + topazCliWorkspace); //$NON-NLS-1$
-		logger.println("targetFolder: " + targetFolder);
-
-		FilePath workDir = new FilePath(vChannel, build.getWorkspace().getRemote());
-
-		for (GitInfo gitInfo : gitInfos)
-		{
-			logger.println("gitInfo = " + gitInfo);
-
-			ref = gitInfo.getRef();
-			refId = gitInfo.getRefId();
-			hash = gitInfo.getHash();
-
-			Map<String, RefMap> map = GitToIspwUtils.parse(branchMapping);
-			logger.println("map=" + map);
-
-			BranchPatternMatcher matcher = new BranchPatternMatcher(map, logger);
-			RefMap refMap = matcher.match(refId);
-
-			if (refMap == null)
-			{
-				logger.println("branch mapping is not defined for refId: " + refId);
-				return false;
-			}
-			else
-			{
-				logger.println("mapping refId: " + refId + " to refMap=" + refMap.toString());
+				gitPushList = (IndexTreeList<GitPushInfo>) mapDb.indexTreeList("pushList", Serializer.JAVA).createOrOpen();
 			}
 
-			String ispwLevel = refMap.getIspwLevel();
-			String containerPref = refMap.getContainerPref();
-			String containerDesc = refMap.getContainerDesc();
+			if (clearFailures && gitPushList != null)
+			{
+				logger.println("Attempting to clear previous push mapDB file " + failedCommitFile.getAbsolutePath());
+				gitPushList.clear();
+				mapDb.commit();
+			}
 
+			// Add the new push
+			GitToIspwUtils.addNewPushToDb(logger, envVars, mapDb, gitPushList, branchMapping);
 			if (RestApiUtils.isIspwDebugMode())
 			{
-				String buildTag = envVars.get("BUILD_TAG");
-				logger.println("getting buildTag=" + buildTag);
-
 				String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
-				logger.println("debugMsg=" + debugMsg);
+				logger.println("debugMsg =" + debugMsg);
 			}
 
-			CliExecutor cliExecutor = new CliExecutor(logger, build, listener, launcher, envVars, targetFolder,
-					topazCliWorkspace, globalConfig, cliScriptFileRemote, workDir, objectQueue);
-			boolean success = cliExecutor.execute(true, connectionId, credentialsId, runtimeConfig, stream, app, ispwLevel,
-					containerPref, containerDesc, gitRepoUrl, gitCredentialsId, ref, refId, hash);
+			// Sync to ISPW
+			boolean success = GitToIspwUtils.callCli(launcher, build, logger, mapDb, gitPushList, envVars, this, workspacePath);
 
-			if (success)
+			// Post the results
+			CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
+			StandardUsernamePasswordCredentials gitCredentials = globalConfig.getLoginInformation(build.getParent(),
+					gitCredentialsId);
+			mapDb = DBMaker.fileDB(failedCommitFile.getAbsolutePath()).transactionEnable().make();
+			GitToIspwUtils.logResultsAndNotifyBitbucket(logger, build, listener, mapDb, gitRepoUrl, gitCredentials);
+
+			if (!success)
 			{
-				if (!newCommit)
-				{
-					objectQueue.remove();
-				}
-			}
-			else
-			{
-				return false;
+				throw new AbortException("An error occurred while synchronizing source to ISPW");
 			}
 		}
-
+		finally
+		{
+			if (mapDb != null && !mapDb.isClosed())
+			{
+				mapDb.commit();
+				mapDb.close();
+			}
+		}
 		return true;
 	}
 
 	@Extension
 	public static final class DescriptorImpl extends BuildStepDescriptor<Builder>
 	{
-
-		// GIT related
-		public static final String gitRepoUrl = StringUtils.EMPTY;
-		public static final String gitCredentialsId = StringUtils.EMPTY;
-
 		// ISPW related
 		public static final String connectionId = StringUtils.EMPTY;
 		public static final String credentialsId = StringUtils.EMPTY;
@@ -245,6 +174,8 @@ public class GitToIspwPublish extends Builder
 
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;
+
+		public static final boolean clearFailures = false;
 
 		public DescriptorImpl()
 		{
@@ -289,6 +220,22 @@ public class GitToIspwPublish extends Builder
 	@Initializer(before = InitMilestone.PLUGINS_STARTED)
 	public static void xStreamCompatibility()
 	{
+	}
+
+	/**
+	 * @return the gitRepoUrl
+	 */
+	public String getGitRepoUrl()
+	{
+		return gitRepoUrl;
+	}
+
+	/**
+	 * @return the gitCredentialsId
+	 */
+	public String getGitCredentialsId()
+	{
+		return gitCredentialsId;
 	}
 
 	/**
@@ -397,6 +344,24 @@ public class GitToIspwPublish extends Builder
 	public void setBranchMapping(String branchMapping)
 	{
 		this.branchMapping = branchMapping;
+	}
+
+	/**
+	 * @return the clearFailures
+	 */
+	public boolean isClearFailedCommits()
+	{
+		return clearFailures;
+	}
+
+	/**
+	 * @param clearFailedCommits
+	 *            the clearFailures to set
+	 */
+	@DataBoundSetter
+	public void setClearFailedCommits(boolean clearFailedCommits)
+	{
+		this.clearFailures = clearFailedCommits;
 	}
 
 }

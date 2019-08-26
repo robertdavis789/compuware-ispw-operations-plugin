@@ -62,4 +62,9 @@
 		<f:textarea default="${descriptor.branchMapping}" />
 	</f:entry>
 
+	<f:entry field="clearFailedCommits" title="Clear previously failed commits from the queue"
+		help="/plugin/compuware-ispw-operations/help-gitIspwClearFailures.html">
+        <f:booleanRadio/>
+    </f:entry>
+
 </j:jelly>

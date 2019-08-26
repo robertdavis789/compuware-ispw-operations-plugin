@@ -67,7 +67,8 @@ pipeline {
         GenericTrigger(
             genericVariables: [
                 [key: 'ref', value: '$.changes[0].ref.displayId', expressionType: 'JSONPath', regexpFilter: '^(refs/heads/\\|refs/remotes/origin/)'],
-                [key: 'hash', value: '$.changes[0].toHash', expressionType: 'JSONPath', regexpFilter: '^(refs/heads/\\|refs/remotes/origin/)'],
+                [key: 'toHash', value: '$.changes[0].toHash', expressionType: 'JSONPath', regexpFilter: '^(refs/heads/\\|refs/remotes/origin/)'],
+                [key: 'fromHash', value: '$.changes[0].fromHash', expressionType: 'JSONPath', regexpFilter: '^(refs/heads/\\|refs/remotes/origin/)'],
                 [key: 'refId', value: '$.changes[0].ref.id', expressionType: 'JSONPath', regexpFilter: '^(refs/heads/\\|refs/remotes/origin/)'],
             ],
      
