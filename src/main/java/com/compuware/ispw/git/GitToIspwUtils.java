@@ -131,6 +131,7 @@ public class GitToIspwUtils
 	}
 	
 	/**
+<<<<<<< HEAD
 	 * Gets the ref, refId, fromHash, and toHash environment variables and trims them to empty.
 	 * 
 	 * @param envVars
@@ -150,6 +151,8 @@ public class GitToIspwUtils
 	}
 	
 	/**
+=======
+>>>>>>> CWE-151387
 	 * Creates a new GitPushInfo object using the information in the envVars and the branchMappings. If the created GitPushInfo
 	 * object does not already exist in theh gitPushList, then it is added and a commit is done on the database.
 	 * 
