@@ -324,7 +324,8 @@ public class IspwRestApiRequest extends Builder {
 
 		EnvVars envVars = build.getEnvironment(listener);
 
-		String buildTag = envVars.get("BUILD_TAG");
+		String buildTag = envVars.get("BUILD_TAG"); //$NON-NLS-1$
+		String workspacePath = envVars.get("WORKSPACE"); //$NON-NLS-1$
 		WebhookToken webhookToken = WebhookTokenManager.getInstance().get(buildTag);
 		
 		if (RestApiUtils.isIspwDebugMode())

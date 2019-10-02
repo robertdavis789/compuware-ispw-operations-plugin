@@ -1,5 +1,6 @@
 package com.compuware.ispw.git;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
@@ -17,14 +18,18 @@ import org.jenkinsci.plugins.stashNotifier.StashBuildState;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
 import org.mapdb.DB;
+import org.mapdb.DBMaker;
 import org.mapdb.IndexTreeList;
 import org.mapdb.Serializer;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.compuware.ispw.cli.model.ChangedContainerInfo;
 import com.compuware.ispw.cli.model.GitPushInfo;
 import com.compuware.ispw.cli.model.IGitToIspwPublish;
+import com.compuware.ispw.restapi.IspwContextPathBean;
+import com.compuware.ispw.restapi.IspwRequestBean;
 import com.compuware.ispw.restapi.util.RestApiUtils;
 import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
 import com.compuware.jenkins.common.utils.CommonConstants;
@@ -468,5 +473,39 @@ public class GitToIspwUtils
 			logger.println("*  SYNCHRONIZATION NOT ATTEMPTED ON REMAINING COMMITS     *");
 		}
 		logger.println("***********************************************************");
+	}
+	
+	
+	public static void updateRequestBeanWithAutomaticFields(IspwRequestBean requestBean, String workspacePath)
+	{
+		File workspaceFile = new File(workspacePath);
+		workspaceFile.mkdirs();
+		File failedCommitFile = new File(workspacePath, GitToIspwConstants.FAILED_COMMIT_FILE_NAME);
+		DB mapDb = DBMaker.fileDB(failedCommitFile.getAbsolutePath()).transactionEnable().make();
+		if (mapDb != null)
+		{
+			List<String> updatedTaskIds = (IndexTreeList<String>) mapDb.indexTreeList("updatedTasks", Serializer.STRING).createOrOpen();
+			if (updatedTaskIds != null && !updatedTaskIds.isEmpty())
+			{
+				IspwContextPathBean bean = requestBean.getIspwContextPathBean();
+				bean.setApplication(null);
+				bean.setMname(null);
+				bean.setMtype(null);
+				bean.setTaskId(null);
+			}
+			
+			
+			List<ChangedContainerInfo> updatedContainers = mapDb.<ChangedContainerInfo>indexTreeList("updatedContainers", Serializer.JAVA).createOrOpen(); //$NON-NLS-1$
+			if (updatedContainers != null && !updatedContainers.isEmpty())
+			{
+				IspwContextPathBean bean = requestBean.getIspwContextPathBean();
+				bean.setApplication(null);
+				bean.setMname(null);
+				bean.setMtype(null);
+				bean.setTaskId(null);
+				bean.setAssignmentId("containerID");
+				bean.setLevel("buildLevel");
+			}
+		}
 	}
 }

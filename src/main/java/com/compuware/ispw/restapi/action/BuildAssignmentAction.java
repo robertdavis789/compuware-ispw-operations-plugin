@@ -11,6 +11,8 @@
 package com.compuware.ispw.restapi.action;
 
 import java.io.PrintStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import com.compuware.ispw.model.rest.BuildResponse;
 import com.compuware.ispw.restapi.Constants;
 import com.compuware.ispw.restapi.IspwContextPathBean;
@@ -41,7 +43,20 @@ public class BuildAssignmentAction extends SetInfoPostAction
 	@Override
 	public IspwRequestBean getIspwRequestBean(String srid, String ispwRequestBody, WebhookToken webhookToken)
 	{
-		return getIspwRequestBean(srid, ispwRequestBody, webhookToken, contextPath);
+		Pattern pattern = Pattern.compile("^(?!#).+\\bbuildautomatically\\b.+$", Pattern.CASE_INSENSITIVE|Pattern.MULTILINE);
+		Matcher matcher= pattern.matcher(ispwRequestBody);
+		if (matcher.matches())
+		{
+			// if the request body contains "buildautomatically" and the line is not a comment, remove that line.
+			ispwRequestBody = matcher.replaceAll("");
+		}
+		IspwRequestBean bean = getIspwRequestBean(srid, ispwRequestBody, webhookToken, contextPath);
+		if (matcher.matches())
+		{
+			
+		}
+		
+		return bean;
 	}
 
 	@SuppressWarnings("nls")
