@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
@@ -14,15 +15,8 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
-import org.mapdb.IndexTreeList;
-import org.mapdb.Serializer;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.compuware.ispw.cli.model.GitPushInfo;
 import com.compuware.ispw.cli.model.IGitToIspwPublish;
 import com.compuware.ispw.restapi.util.RestApiUtils;
-import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -63,7 +57,6 @@ public class GitToIspwPublish extends Builder implements IGitToIspwPublish
 
 	// Branch mapping
 	private String branchMapping = DescriptorImpl.branchMapping;
-	private boolean clearFailures = DescriptorImpl.clearFailures;
 
 	@DataBoundConstructor
 	public GitToIspwPublish()
@@ -107,54 +100,24 @@ public class GitToIspwPublish extends Builder implements IGitToIspwPublish
 		String workspacePath = envVars.get("WORKSPACE"); //$NON-NLS-1$
 		File workspaceFile = new File(workspacePath);
 		workspaceFile.mkdirs();
-		File failedCommitFile = new File(workspacePath, GitToIspwConstants.FAILED_COMMIT_FILE_NAME);
-		logger.println("Previous push queue file = " + failedCommitFile.getAbsolutePath());
-		DB mapDb = DBMaker.fileDB(failedCommitFile.getAbsolutePath()).transactionEnable().make();
-		try
+		Map<String, RefMap> map = GitToIspwUtils.parse(branchMapping);
+		logger.println("map=" + map);
+		String refId = envVars.get(GitToIspwConstants.VAR_REF_ID, null);
+		BranchPatternMatcher matcher = new BranchPatternMatcher(map, logger);
+		RefMap refMap = matcher.match(refId);
+
+		if (RestApiUtils.isIspwDebugMode())
 		{
-			IndexTreeList<GitPushInfo> gitPushList = null;
-			if (mapDb != null)
-			{
-				gitPushList = (IndexTreeList<GitPushInfo>) mapDb.indexTreeList("pushList", Serializer.JAVA).createOrOpen();
-			}
-
-			if (clearFailures && gitPushList != null)
-			{
-				logger.println("Attempting to clear previous push mapDB file " + failedCommitFile.getAbsolutePath());
-				gitPushList.clear();
-				mapDb.commit();
-			}
-
-			// Add the new push
-			GitToIspwUtils.addNewPushToDb(logger, envVars, mapDb, gitPushList, branchMapping);
-			if (RestApiUtils.isIspwDebugMode())
-			{
-				String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
-				logger.println("debugMsg =" + debugMsg);
-			}
-
-			// Sync to ISPW
-			boolean success = GitToIspwUtils.callCli(launcher, build, logger, mapDb, gitPushList, envVars, this, workspacePath);
-
-			// Post the results
-			CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
-			StandardUsernamePasswordCredentials gitCredentials = globalConfig.getLoginInformation(build.getParent(),
-					gitCredentialsId);
-			mapDb = DBMaker.fileDB(failedCommitFile.getAbsolutePath()).transactionEnable().make();
-			GitToIspwUtils.logResultsAndNotifyBitbucket(logger, build, listener, mapDb, gitRepoUrl, gitCredentials);
-
-			if (!success)
-			{
-				throw new AbortException("An error occurred while synchronizing source to ISPW");
-			}
+			String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+			logger.println("debugMsg =" + debugMsg);
 		}
-		finally
+
+		// Sync to ISPW
+		boolean success = GitToIspwUtils.callCli(launcher, build, logger, envVars, refMap, this, workspacePath);
+
+		if (!success)
 		{
-			if (mapDb != null && !mapDb.isClosed())
-			{
-				mapDb.commit();
-				mapDb.close();
-			}
+			throw new AbortException("An error occurred while synchronizing source to ISPW");
 		}
 		return true;
 	}
@@ -174,8 +137,6 @@ public class GitToIspwPublish extends Builder implements IGitToIspwPublish
 
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;
-
-		public static final boolean clearFailures = false;
 
 		public DescriptorImpl()
 		{
@@ -344,24 +305,6 @@ public class GitToIspwPublish extends Builder implements IGitToIspwPublish
 	public void setBranchMapping(String branchMapping)
 	{
 		this.branchMapping = branchMapping;
-	}
-
-	/**
-	 * @return the clearFailures
-	 */
-	public boolean isClearFailedCommits()
-	{
-		return clearFailures;
-	}
-
-	/**
-	 * @param clearFailedCommits
-	 *            the clearFailures to set
-	 */
-	@DataBoundSetter
-	public void setClearFailedCommits(boolean clearFailedCommits)
-	{
-		this.clearFailures = clearFailedCommits;
 	}
 
 }

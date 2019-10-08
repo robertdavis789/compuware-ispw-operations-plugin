@@ -2,8 +2,6 @@ package com.compuware.ispw.git;
 
 public class GitToIspwConstants
 {
-	public static final String FAILED_COMMIT_FILE_NAME = "commitsFailedToSync.bin"; //$NON-NLS-1$
-	
 	public static final String VAR_REF_ID = "refId"; //$NON-NLS-1$
 	public static final String VAR_REF = "ref"; //$NON-NLS-1$
 	public static final String VAR_TO_HASH = "toHash"; //$NON-NLS-1$

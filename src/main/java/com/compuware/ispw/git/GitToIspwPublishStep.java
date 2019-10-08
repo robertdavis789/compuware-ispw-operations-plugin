@@ -2,6 +2,7 @@ package com.compuware.ispw.git;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.util.Map;
 import javax.inject.Inject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
@@ -12,12 +13,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
-import org.mapdb.IndexTreeList;
-import org.mapdb.Serializer;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.compuware.ispw.cli.model.GitPushInfo;
 import com.compuware.ispw.cli.model.IGitToIspwPublish;
 import com.compuware.ispw.restapi.util.RestApiUtils;
 import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
@@ -54,7 +50,6 @@ public class GitToIspwPublishStep extends AbstractStepImpl implements IGitToIspw
 
 	// Branch mapping
 	private String branchMapping = DescriptorImpl.branchMapping;
-	private boolean clearFailures = DescriptorImpl.clearFailures;
 
 	@DataBoundConstructor
 	public GitToIspwPublishStep()
@@ -83,58 +78,23 @@ public class GitToIspwPublishStep extends AbstractStepImpl implements IGitToIspw
 			String workspacePath = envVars.get("WORKSPACE");
 			File workspaceFile = new File(workspacePath);
 			workspaceFile.mkdirs();
-			File failedCommitFile = new File(workspacePath, GitToIspwConstants.FAILED_COMMIT_FILE_NAME);
-			logger.println("Previous push queue file = " + failedCommitFile.getAbsolutePath());
-			DB mapDb = DBMaker.fileDB(failedCommitFile.getAbsolutePath()).transactionEnable().make();
-			IndexTreeList<GitPushInfo> gitPushList = null;
 			boolean success = true;
-			try
-			{
-				if (mapDb != null)
-				{
-					gitPushList = (IndexTreeList<GitPushInfo>) mapDb.indexTreeList("pushList", Serializer.JAVA).createOrOpen();
-				}
+			Map<String, RefMap> map = GitToIspwUtils.parse(step.branchMapping);
+			logger.println("map=" + map);
+			String refId = envVars.get(GitToIspwConstants.VAR_REF_ID, null);
+			BranchPatternMatcher matcher = new BranchPatternMatcher(map, logger);
+			RefMap refMap = matcher.match(refId);
 
-				if (step.clearFailures && gitPushList != null)
-				{
-					logger.println("Attempting to clear commit failures file " + failedCommitFile.getAbsolutePath());
-					gitPushList.clear();
-					mapDb.commit();
-				}
+			CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
+			Launcher launcher = getContext().get(Launcher.class);
+			// Sync to ISPW
+			success = GitToIspwUtils.callCli(launcher, run, logger, envVars, refMap, step, workspacePath);
 
-				// Add the new push
-				GitToIspwUtils.addNewPushToDb(logger, envVars, mapDb, gitPushList, step.branchMapping);
+			if (success)
+				return 0;
+			else
+				throw new AbortException("An error occurred while synchronizing source to ISPW");
 
-				CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
-				Launcher launcher = getContext().get(Launcher.class);
-				// Sync to ISPW
-				success = GitToIspwUtils.callCli(launcher, run, logger, mapDb, gitPushList, envVars, step,
-						workspacePath);
-
-				// Post the results
-				StandardUsernamePasswordCredentials gitCredentials = globalConfig.getLoginInformation(run.getParent(),
-						step.gitCredentialsId);
-				mapDb = DBMaker.fileDB(failedCommitFile.getAbsolutePath()).transactionEnable().make();
-				GitToIspwUtils.logResultsAndNotifyBitbucket(logger, run, listener, mapDb, step.gitRepoUrl, gitCredentials);
-				if( success)
-					return 0;
-				else
-					throw new AbortException("An error occurred while synchronizing source to ISPW");
-
-			}
-			finally
-			{
-				if (mapDb != null && !mapDb.isClosed())
-				{
-					mapDb.commit();
-					mapDb.close();
-				}
-				if( success)
-					return 0;
-				else
-					throw new AbortException("An error occurred while synchronizing source to ISPW");
-
-			}
 		}
 	}
 
@@ -159,8 +119,6 @@ public class GitToIspwPublishStep extends AbstractStepImpl implements IGitToIspw
 
 		public static final String containerDesc = StringUtils.EMPTY;
 		public static final String containerPref = StringUtils.EMPTY;
-
-		public static final boolean clearFailures = false;
 
 		public DescriptorImpl()
 		{
@@ -348,24 +306,6 @@ public class GitToIspwPublishStep extends AbstractStepImpl implements IGitToIspw
 	public void setBranchMapping(String branchMapping)
 	{
 		this.branchMapping = branchMapping;
-	}
-
-	/**
-	 * @return the clearFailures
-	 */
-	public boolean isClearFailedCommits()
-	{
-		return clearFailures;
-	}
-
-	/**
-	 * @param clearFailedCommits
-	 *            the clearFailures to set
-	 */
-	@DataBoundSetter
-	public void setClearFailedCommits(boolean clearFailedCommits)
-	{
-		this.clearFailures = clearFailedCommits;
 	}
 
 }
