@@ -1,6 +1,7 @@
 package com.compuware.ispw.restapi;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import com.compuware.ispw.model.rest.TaskInfo;
 import com.compuware.ispw.model.rest.TaskListResponse;
 import com.compuware.ispw.model.rest.TaskResponse;
 import com.compuware.ispw.restapi.action.IAction;
+import com.compuware.ispw.restapi.action.IBuildAction;
 import com.compuware.ispw.restapi.action.SetOperationAction;
 import com.compuware.ispw.restapi.auth.BasicDigestAuthentication;
 import com.compuware.ispw.restapi.auth.FormAuthentication;
@@ -324,8 +326,9 @@ public class IspwRestApiRequest extends Builder {
 
 		EnvVars envVars = build.getEnvironment(listener);
 
+		File buildDirectory = build.getRootDir();
+		logger.println("buildDirectory: " + buildDirectory.getAbsolutePath());
 		String buildTag = envVars.get("BUILD_TAG"); //$NON-NLS-1$
-		String workspacePath = envVars.get("WORKSPACE"); //$NON-NLS-1$
 		WebhookToken webhookToken = WebhookTokenManager.getInstance().get(buildTag);
 		
 		if (RestApiUtils.isIspwDebugMode())
@@ -367,8 +370,16 @@ public class IspwRestApiRequest extends Builder {
 			logger.println("CES Url=" + cesUrl + ", ces.ispw.host=" + cesIspwHost
 					+ ", ces.ispw.token=" + cesIspwToken);
 
-		IspwRequestBean ispwRequestBean =
-				action.getIspwRequestBean(cesIspwHost, ispwRequestBody, webhookToken);
+		IspwRequestBean ispwRequestBean = null;
+		if (action instanceof IBuildAction)
+		{
+			ispwRequestBean = ((IBuildAction) action).getIspwRequestBean(cesIspwHost, ispwRequestBody, webhookToken,
+					buildDirectory);
+		}
+		else
+		{
+			ispwRequestBean = action.getIspwRequestBean(cesIspwHost, ispwRequestBody, webhookToken);
+		}
 		
 		if (RestApiUtils.isIspwDebugMode())
 			logger.println("...ispwRequestBean=" + ispwRequestBean);

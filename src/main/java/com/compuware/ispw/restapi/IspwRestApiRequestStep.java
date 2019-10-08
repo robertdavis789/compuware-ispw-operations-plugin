@@ -1,5 +1,6 @@
 package com.compuware.ispw.restapi;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import com.compuware.ispw.model.rest.TaskInfo;
 import com.compuware.ispw.model.rest.TaskListResponse;
 import com.compuware.ispw.model.rest.TaskResponse;
 import com.compuware.ispw.restapi.action.IAction;
+import com.compuware.ispw.restapi.action.IBuildAction;
 import com.compuware.ispw.restapi.action.SetOperationAction;
 import com.compuware.ispw.restapi.util.HttpRequestNameValuePair;
 import com.compuware.ispw.restapi.util.ReflectUtils;
@@ -351,7 +353,8 @@ public final class IspwRestApiRequestStep extends AbstractStepImpl {
 			PrintStream logger = listener.getLogger();
 
 			EnvVars envVars = getContext().get(hudson.EnvVars.class);
-
+			File buildDirectory = run.getRootDir();
+			logger.println("buildDirectory: " + buildDirectory.getAbsolutePath());
 			String buildTag = envVars.get("BUILD_TAG");
 			WebhookToken webhookToken = WebhookTokenManager.getInstance().get(buildTag);
 			
@@ -398,8 +401,16 @@ public final class IspwRestApiRequestStep extends AbstractStepImpl {
 				logger.println("...ces.url=" + cesUrl + ", ces.ispw.host=" + cesIspwHost
 						+ ", ces.ispw.token=" + cesIspwToken);
 
-			IspwRequestBean ispwRequestBean =
-					action.getIspwRequestBean(cesIspwHost, step.ispwRequestBody, webhookToken);
+			IspwRequestBean ispwRequestBean = null;
+			if (action instanceof IBuildAction)
+			{
+				ispwRequestBean = ((IBuildAction) action).getIspwRequestBean(cesIspwHost, step.ispwRequestBody, webhookToken,
+						buildDirectory);
+			}
+			else
+			{
+				ispwRequestBean = action.getIspwRequestBean(cesIspwHost, step.ispwRequestBody, webhookToken);
+			}
 
 			if (RestApiUtils.isIspwDebugMode())
 				logger.println("ispwRequestBean=" + ispwRequestBean);

@@ -25,7 +25,7 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.compuware.ispw.cli.model.ChangedContainerInfo;
+import com.compuware.ispw.cli.model.BuildParms;
 import com.compuware.ispw.cli.model.GitPushInfo;
 import com.compuware.ispw.cli.model.IGitToIspwPublish;
 import com.compuware.ispw.restapi.IspwContextPathBean;
@@ -136,7 +136,6 @@ public class GitToIspwUtils
 	}
 	
 	/**
-<<<<<<< HEAD
 	 * Gets the ref, refId, fromHash, and toHash environment variables and trims them to empty.
 	 * 
 	 * @param envVars
@@ -156,8 +155,6 @@ public class GitToIspwUtils
 	}
 	
 	/**
-=======
->>>>>>> CWE-151387
 	 * Creates a new GitPushInfo object using the information in the envVars and the branchMappings. If the created GitPushInfo
 	 * object does not already exist in theh gitPushList, then it is added and a commit is done on the database.
 	 * 
@@ -495,7 +492,7 @@ public class GitToIspwUtils
 			}
 			
 			
-			List<ChangedContainerInfo> updatedContainers = mapDb.<ChangedContainerInfo>indexTreeList("updatedContainers", Serializer.JAVA).createOrOpen(); //$NON-NLS-1$
+			List<BuildParms> updatedContainers = mapDb.<BuildParms>indexTreeList("updatedContainers", Serializer.JAVA).createOrOpen(); //$NON-NLS-1$
 			if (updatedContainers != null && !updatedContainers.isEmpty())
 			{
 				IspwContextPathBean bean = requestBean.getIspwContextPathBean();

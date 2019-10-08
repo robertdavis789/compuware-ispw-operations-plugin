@@ -11,24 +11,21 @@
 package com.compuware.ispw.cli.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
  * 
  */
-public class ChangedContainerInfo implements Serializable
+public class BuildParms implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 	private static Gson gson = new GsonBuilder().create();
 	private String containerId;
+	private String releaseId;
 	private String taskLevel;
-
-	public ChangedContainerInfo(String containerId, String taskLevel)
-	{
-		this.containerId = containerId;
-		this.taskLevel = taskLevel;
-	}
+	private ArrayList<String> taskIds = new ArrayList<>();
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
@@ -40,6 +37,7 @@ public class ChangedContainerInfo implements Serializable
 		int result = 1;
 		result = prime * result + ((containerId == null) ? 0 : containerId.hashCode());
 		result = prime * result + ((taskLevel == null) ? 0 : taskLevel.hashCode());
+		result = prime * result + ((taskIds == null) ? 0 : taskIds.hashCode());
 		return result;
 	}
 
@@ -55,7 +53,7 @@ public class ChangedContainerInfo implements Serializable
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ChangedContainerInfo other = (ChangedContainerInfo) obj;
+		BuildParms other = (BuildParms) obj;
 		if (containerId == null)
 		{
 			if (other.containerId != null)
@@ -70,6 +68,13 @@ public class ChangedContainerInfo implements Serializable
 		}
 		else if (!taskLevel.equals(other.taskLevel))
 			return false;
+		if (taskIds == null)
+		{
+			if (other.taskIds != null)
+				return false;
+		}
+		else if (!taskIds.equals(other.taskIds))
+			return false;
 
 		return true;
 	}
@@ -83,9 +88,9 @@ public class ChangedContainerInfo implements Serializable
 		return gson.toJson(this);
 	}
 
-	public static ChangedContainerInfo parse(String s)
+	public static BuildParms parse(String s)
 	{
-		return gson.fromJson(s, ChangedContainerInfo.class);
+		return gson.fromJson(s, BuildParms.class);
 	}
 
 	/**
@@ -122,4 +127,36 @@ public class ChangedContainerInfo implements Serializable
 		this.taskLevel = taskLevel;
 	}
 
+	/**
+	 * @return the taskIds List
+	 */
+	public ArrayList<String> getTaskIds()
+	{
+		return taskIds;
+	}
+
+	/**
+	 * @param taskId
+	 *            the taskId to set
+	 */
+	public void addTaskId(String taskId)
+	{
+		this.taskIds.add(taskId);
+	}
+
+	/**
+	 * @return the releaseId
+	 */
+	public String getReleaseId()
+	{
+		return releaseId;
+	}
+
+	/**
+	 * @param releaseId the releaseId to set
+	 */
+	public void setReleaseId(String releaseId)
+	{
+		this.releaseId = releaseId;
+	}
 }

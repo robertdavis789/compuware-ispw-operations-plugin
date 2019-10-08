@@ -10,9 +10,8 @@
  */
 package com.compuware.ispw.restapi.action;
 
+import java.io.File;
 import java.io.PrintStream;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import com.compuware.ispw.model.rest.BuildResponse;
 import com.compuware.ispw.restapi.Constants;
 import com.compuware.ispw.restapi.IspwContextPathBean;
@@ -24,7 +23,7 @@ import com.compuware.ispw.restapi.util.RestApiUtils;
 /**
  * Action to build an assignment
  */
-public class BuildAssignmentAction extends SetInfoPostAction
+public class BuildAssignmentAction extends SetInfoPostAction implements IBuildAction
 {
 	private static final String[] defaultProps = new String[]{assignmentId, level, runtimeConfiguration};
 
@@ -43,20 +42,7 @@ public class BuildAssignmentAction extends SetInfoPostAction
 	@Override
 	public IspwRequestBean getIspwRequestBean(String srid, String ispwRequestBody, WebhookToken webhookToken)
 	{
-		Pattern pattern = Pattern.compile("^(?!#).+\\bbuildautomatically\\b.+$", Pattern.CASE_INSENSITIVE|Pattern.MULTILINE);
-		Matcher matcher= pattern.matcher(ispwRequestBody);
-		if (matcher.matches())
-		{
-			// if the request body contains "buildautomatically" and the line is not a comment, remove that line.
-			ispwRequestBody = matcher.replaceAll("");
-		}
-		IspwRequestBean bean = getIspwRequestBean(srid, ispwRequestBody, webhookToken, contextPath);
-		if (matcher.matches())
-		{
-			
-		}
-		
-		return bean;
+		return getIspwRequestBean(srid, ispwRequestBody, webhookToken, contextPath);
 	}
 
 	@SuppressWarnings("nls")
@@ -76,5 +62,16 @@ public class BuildAssignmentAction extends SetInfoPostAction
 				+ ispwRequestBean.getIspwContextPathBean().getAssignmentId());
 
 		return buildResp;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.compuware.ispw.restapi.action.IBuildAction#getIspwRequestBean(java.lang.String, java.lang.String, com.compuware.ispw.restapi.WebhookToken, java.io.File)
+	 */
+	@Override
+	public IspwRequestBean getIspwRequestBean(String srid, String ispwRequestBody, WebhookToken webhookToken,
+			File buildDirectory)
+	{
+		ispwRequestBody = getRequestBody(ispwRequestBody, buildDirectory);
+		return getIspwRequestBean(srid, ispwRequestBody, webhookToken);
 	}
 }
