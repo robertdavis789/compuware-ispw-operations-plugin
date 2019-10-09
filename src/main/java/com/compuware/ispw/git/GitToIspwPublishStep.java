@@ -78,23 +78,24 @@ public class GitToIspwPublishStep extends AbstractStepImpl implements IGitToIspw
 			String workspacePath = envVars.get("WORKSPACE");
 			File workspaceFile = new File(workspacePath);
 			workspaceFile.mkdirs();
-			boolean success = true;
 			Map<String, RefMap> map = GitToIspwUtils.parse(step.branchMapping);
 			logger.println("map=" + map);
 			String refId = envVars.get(GitToIspwConstants.VAR_REF_ID, null);
 			BranchPatternMatcher matcher = new BranchPatternMatcher(map, logger);
 			RefMap refMap = matcher.match(refId);
 
-			CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
 			Launcher launcher = getContext().get(Launcher.class);
 			// Sync to ISPW
-			success = GitToIspwUtils.callCli(launcher, run, logger, envVars, refMap, step, workspacePath);
+			boolean success = GitToIspwUtils.callCli(launcher, run, logger, envVars, refMap, step, workspacePath);
 
 			if (success)
+			{
 				return 0;
+			}
 			else
+			{
 				throw new AbortException("An error occurred while synchronizing source to ISPW");
-
+			}
 		}
 	}
 

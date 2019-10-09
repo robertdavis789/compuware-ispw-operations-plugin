@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import org.apache.commons.lang.StringUtils;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.compuware.ispw.cli.model.GitPushInfo;
 import com.compuware.ispw.restapi.util.RestApiUtils;
 import com.compuware.jenkins.common.configuration.CpwrGlobalConfiguration;
 import com.compuware.jenkins.common.configuration.HostConnection;
@@ -35,21 +34,21 @@ public class CliExecutor
 
 	private String targetFolder;
 	private String topazCliWorkspace;
-
+	private String jenkinsJobWorkspacePath;
 	private String cliScriptFileRemote;
 	private FilePath workDir;
 
-	public CliExecutor(PrintStream logger, Run<?, ?> run, Launcher launcher, EnvVars envVars, String targetFolder,
+	public CliExecutor(PrintStream logger, Run<?, ?> run, Launcher launcher, EnvVars envVars, String jenkinsJobWorkspacePath,
 			String topazCliWorkspace, CpwrGlobalConfiguration globalConfig, String cliScriptFileRemote, FilePath workDir)
 	{
 		this.logger = logger;
 		this.run = run;
 		this.envVars = envVars;
 		this.launcher = launcher;
-
+		this.targetFolder = run.getRootDir().getAbsolutePath();
 		this.globalConfig = globalConfig;
 
-		this.targetFolder = targetFolder;
+		this.jenkinsJobWorkspacePath = jenkinsJobWorkspacePath;
 		this.topazCliWorkspace = topazCliWorkspace;
 
 		this.cliScriptFileRemote = cliScriptFileRemote;
@@ -99,8 +98,6 @@ public class CliExecutor
 		{
 			logger.println("gitRepoUrl=" + gitRepoUrl + ", gitUserId=" + gitUserId + ", gitPassword=" + gitPassword);
 		}
-		
-		String workspacePath = envVars.get("WORKSPACE"); //$NON-NLS-1$
 
 		ArgumentListBuilder args = new ArgumentListBuilder();
 		// build the list of arguments to pass to the CLI
@@ -155,7 +152,7 @@ public class CliExecutor
 		args.add(GitToIspwConstants.GIT_REF_PARAM, ref);
 		args.add(GitToIspwConstants.GIT_FROM_HASH_PARAM, fromHash);
 		args.add(GitToIspwConstants.GIT_HASH_PARAM, toHash);
-		args.add(GitToIspwConstants.JENKINS_WORKSPACE_PATH_ARG_PARAM, workspacePath);
+		args.add(GitToIspwConstants.JENKINS_WORKSPACE_PATH_ARG_PARAM, jenkinsJobWorkspacePath);
 
 		workDir.mkdirs();
 		logger.println("Shell script: " + args.toString());

@@ -108,6 +108,6 @@ public class BuildTaskAction extends SetInfoPostAction implements IBuildAction
 			File buildDirectory)
 	{
 		ispwRequestBody = getRequestBody(ispwRequestBody, buildDirectory);
-		return getIspwRequestBean(srid, ispwRequestBody, webhookToken, contextPath);
+		return getIspwRequestBean(srid, ispwRequestBody, webhookToken);
 	}
 }

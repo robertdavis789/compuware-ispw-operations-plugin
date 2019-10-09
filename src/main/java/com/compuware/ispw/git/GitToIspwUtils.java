@@ -2,7 +2,6 @@ package com.compuware.ispw.git;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -159,13 +158,13 @@ public class GitToIspwUtils
 	 * @param publishStep
 	 *            The step that this CLI execution is being called from. The publish step is used to get the information input
 	 *            into the Jenkins UI.
-	 * @param targetFolder
-	 *            The folder that holds the failed commit file and where the CLI workspace should be created.
+	 * @param workspacePath
+	 *            The folder that holds the git repository cloned by the SCM step.
 	 * @return a boolean indicating success.
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public static boolean callCli(Launcher launcher, Run<?, ?> build, PrintStream logger, EnvVars envVars, RefMap refMap, IGitToIspwPublish publishStep, String targetFolder)
+	public static boolean callCli(Launcher launcher, Run<?, ?> build, PrintStream logger, EnvVars envVars, RefMap refMap, IGitToIspwPublish publishStep, String workspacePath)
 			throws InterruptedException, IOException
 	{
 		CpwrGlobalConfiguration globalConfig = CpwrGlobalConfiguration.get();
@@ -179,18 +178,31 @@ public class GitToIspwUtils
 		{
 			return false;
 		}
+		
+		String toHash = envVars.get(GitToIspwConstants.VAR_TO_HASH, null);
+		String fromHash = envVars.get(GitToIspwConstants.VAR_FROM_HASH, null);
+		String ref = envVars.get(GitToIspwConstants.VAR_REF, null);
+		String refId = envVars.get(GitToIspwConstants.VAR_REF_ID, null);
+		if (refMap == null)
+		{
+			logger.println("branch mapping is not defined for refId: " + refId);
+			return false;
+		}
+		else
+		{
+			logger.println("mapping refId: " + refId + " to refMap=" + refMap.toString());
+		}
 		Properties remoteProperties = vChannel.call(new RemoteSystemProperties());
 		String remoteFileSeparator = remoteProperties.getProperty(CommonConstants.FILE_SEPARATOR_PROPERTY_KEY);
 		String osFile = launcher.isUnix()
 				? GitToIspwConstants.SCM_DOWNLOADER_CLI_SH
 				: GitToIspwConstants.SCM_DOWNLOADER_CLI_BAT;
-		logger.println("Target Folder: " + targetFolder);
 		String cliScriptFile = globalConfig.getTopazCLILocation(launcher) + remoteFileSeparator + osFile;
 		logger.println("CLI Script File: " + cliScriptFile); //$NON-NLS-1$
 		String cliScriptFileRemote = new FilePath(vChannel, cliScriptFile).getRemote();
 		logger.println("CLI Script File Remote: " + cliScriptFileRemote); //$NON-NLS-1$
 
-		String topazCliWorkspace = targetFolder + CommonConstants.TOPAZ_CLI_WORKSPACE;
+		String topazCliWorkspace = workspacePath + CommonConstants.TOPAZ_CLI_WORKSPACE;
 		logger.println("TopazCliWorkspace: " + topazCliWorkspace); //$NON-NLS-1$
 
 		FilePath workDir = new FilePath(vChannel, build.getRootDir().toString());
@@ -201,14 +213,9 @@ public class GitToIspwUtils
 			String buildTag = envVars.get("BUILD_TAG"); //$NON-NLS-1$
 			logger.println("Getting buildTag =" + buildTag);
 		}
-		
-		String toHash = envVars.get(GitToIspwConstants.VAR_TO_HASH, null);
-		String fromHash = envVars.get(GitToIspwConstants.VAR_FROM_HASH, null);
-		String ref = envVars.get(GitToIspwConstants.VAR_REF, null);
-		String refId = envVars.get(GitToIspwConstants.VAR_REF_ID, null);
    
 		boolean success = true;
-			CliExecutor cliExecutor = new CliExecutor(logger, build, launcher, envVars, targetFolder, topazCliWorkspace,
+			CliExecutor cliExecutor = new CliExecutor(logger, build, launcher, envVars, workspacePath, topazCliWorkspace,
 					globalConfig, cliScriptFileRemote, workDir);
 			try
 			{
@@ -221,15 +228,14 @@ public class GitToIspwUtils
 				success = false;
 			}
 
-			if (!success)
-			{
-				logger.println("Synchronization for push ending with commit " + toHash
-						+ " failed. Remaining pushes will be marked as failures.");
-			}
-			else
-			{
-				logger.println("Synchronization for push ending with commit " + toHash + " was successful.");
-			}
+		if (!success)
+		{
+			logger.println("Synchronization for push ending with commit " + toHash + " failed.");
+		}
+		else
+		{
+			logger.println("Synchronization for push ending with commit " + toHash + " was successful.");
+		}
 		return success;
 	}
 

@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.CharEncoding;
 import com.compuware.ispw.cli.model.BuildParms;
 import com.compuware.ispw.restapi.IspwRequestBean;
 import com.compuware.ispw.restapi.WebhookToken;
@@ -38,7 +40,7 @@ public interface IBuildAction
 			System.out.println(parmFile.getAbsolutePath());
 			try
 			{
-				String jsonString = new String(Files.readAllBytes(Paths.get(parmFile.getAbsolutePath())));
+				String jsonString = FileUtils.readFileToString(parmFile, CharEncoding.UTF_8);
 				BuildParms buildParms = BuildParms.parse(jsonString);
 				StringBuilder requestBodyBuffer = new StringBuilder();
 				requestBodyBuffer.append("assignmentId = " + buildParms.getContainerId());

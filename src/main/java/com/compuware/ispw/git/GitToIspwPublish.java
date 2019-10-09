@@ -106,12 +106,6 @@ public class GitToIspwPublish extends Builder implements IGitToIspwPublish
 		BranchPatternMatcher matcher = new BranchPatternMatcher(map, logger);
 		RefMap refMap = matcher.match(refId);
 
-		if (RestApiUtils.isIspwDebugMode())
-		{
-			String debugMsg = ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
-			logger.println("debugMsg =" + debugMsg);
-		}
-
 		// Sync to ISPW
 		boolean success = GitToIspwUtils.callCli(launcher, build, logger, envVars, refMap, this, workspacePath);
 
