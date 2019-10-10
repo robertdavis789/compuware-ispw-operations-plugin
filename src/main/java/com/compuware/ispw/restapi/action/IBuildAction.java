@@ -12,6 +12,7 @@ package com.compuware.ispw.restapi.action;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.regex.Matcher;
@@ -28,35 +29,56 @@ import com.compuware.ispw.restapi.WebhookToken;
 public interface IBuildAction
 {
 	public static String BUILD_PARAM_FILE_NAME = "automaticBuildParams.txt"; //$NON-NLS-1$
-
-	public default String getRequestBody(String ispwRequestBody, File buildDirectory)
+	
+	public default String getRequestBody(String ispwRequestBody, File buildDirectory, PrintStream logger)
 	{
-		Pattern pattern = Pattern.compile("^(?!#).+\\bbuildautomatically\\b.+$", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE); //$NON-NLS-1$
+		logger.println("getRequestBody");
+		Pattern pattern = Pattern.compile("^(?!#)(.+)?buildautomatically.+true(.+)?$", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE); //$NON-NLS-1$
 		Matcher matcher = pattern.matcher(ispwRequestBody);
+		logger.println("given body = \n" + ispwRequestBody);
 		if (matcher.matches())
 		{
-			// if the body contains "buildautomatically" case insensitive, and the line is not a comment.
+			logger.println("matcher matches");
+			// if a line of the body contains "buildautomatically" and "true" case insensitive, and the line is not a comment.
 			File parmFile = new File(buildDirectory, BUILD_PARAM_FILE_NAME);
-			System.out.println(parmFile.getAbsolutePath());
-			try
+			logger.println(parmFile.getAbsolutePath());
+//			try
+//			{
+				String jsonString = "{\"containerId\" : \"PLAY002632\", \"taskLevel\" : \"DEV1\", \"taskIds\" : [\"7E39DD1E5D45\"]}";
+			// String jsonString = FileUtils.readFileToString(parmFile, CharEncoding.UTF_8);
+			BuildParms buildParms = BuildParms.parse(jsonString);
+			if (buildParms != null)
 			{
-				String jsonString = FileUtils.readFileToString(parmFile, CharEncoding.UTF_8);
-				BuildParms buildParms = BuildParms.parse(jsonString);
 				StringBuilder requestBodyBuffer = new StringBuilder();
-				requestBodyBuffer.append("assignmentId = " + buildParms.getContainerId());
-				requestBodyBuffer.append("\nlevel = " + buildParms.getTaskLevel());
-				requestBodyBuffer.append("\ntaskId = " + buildParms.getTaskIds().get(0));
+				if (buildParms.getContainerId() != null)
+				{
+					requestBodyBuffer.append("assignmentId = " + buildParms.getContainerId());
+				}
+				if (buildParms.getTaskLevel() != null)
+				{
+					requestBodyBuffer.append("\nlevel = " + buildParms.getTaskLevel());
+				}
+				if (buildParms.getReleaseId() != null)
+				{
+					requestBodyBuffer.append("\nreleaseId = " + buildParms.getReleaseId());
+				}
+				if (buildParms.getTaskIds() != null && !buildParms.getTaskIds().isEmpty())
+				{
+					requestBodyBuffer.append("\ntaskId = " + buildParms.getTaskIds().get(0));
+				}
 				ispwRequestBody = requestBodyBuffer.toString();
 			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-			}
+				
+//			}
+//			catch (IOException e)
+//			{
+//				e.printStackTrace();
+//			}
 		}
-
+		logger.println("requestBody = \n" + ispwRequestBody);
 		return ispwRequestBody;
 	}
-	
+
 	public IspwRequestBean getIspwRequestBean(String srid, String ispwRequestBody, WebhookToken webhookToken, File buildDirectory);
 
 }

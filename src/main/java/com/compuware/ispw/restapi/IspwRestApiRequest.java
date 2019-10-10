@@ -373,6 +373,7 @@ public class IspwRestApiRequest extends Builder {
 		IspwRequestBean ispwRequestBean = null;
 		if (action instanceof IBuildAction)
 		{
+			logger.println("action is a build action");
 			ispwRequestBean = ((IBuildAction) action).getIspwRequestBean(cesIspwHost, ispwRequestBody, webhookToken,
 					buildDirectory);
 		}
